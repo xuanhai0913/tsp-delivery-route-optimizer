@@ -2,8 +2,9 @@
 
 Node.js + Express backend for solving the TSP delivery-route problem.
 
-This folder is intentionally a base structure only. Do not add dependencies or
-runtime code here until the team starts backend implementation.
+This folder contains the backend TypeScript test harness for algorithm work.
+Runtime Express APIs are still planned, but backend CI is already available for
+validators, route utilities, and future Greedy / Branch and Bound tests.
 
 ## Planned Responsibilities
 
@@ -51,3 +52,18 @@ type SolveResult = {
   runtimeMs: number;
 };
 ```
+
+## Local Checks
+
+Run these commands before opening a PR that changes backend algorithms or shared
+data:
+
+```bash
+cd backend
+npm ci
+npm run typecheck
+npm run test
+```
+
+GitHub Actions runs the same checks in `Backend Algorithm CI` whenever a PR or
+push touches `backend/**`, `data/**`, or the backend workflow file.

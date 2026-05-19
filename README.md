@@ -1,6 +1,10 @@
 # RouteLab Group 1
 
 <p align="center">
+  <img src="frontend/public/brand/logo-horizontal.png" alt="RouteLab Group 1 banner" width="100%">
+</p>
+
+<p align="center">
   <strong>Classroom route-optimization lab for comparing Greedy nearest-neighbor and Branch and Bound on TSP.</strong>
 </p>
 

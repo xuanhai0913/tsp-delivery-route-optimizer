@@ -1,0 +1,48 @@
+name: Backend Algorithm CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "data/**"
+      - ".github/workflows/backend-algorithm-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "data/**"
+      - ".github/workflows/backend-algorithm-ci.yml"
+
+concurrency:
+  group: backend-algorithm-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-algorithm-tests:
+    name: Typecheck and test backend algorithms
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck backend
+        run: npm run typecheck
+
+      - name: Run algorithm tests
+        run: npm run test
