@@ -1,34 +1,54 @@
-# Frontend
+# RouteLab Group 1 Frontend
 
-React + Vite frontend for the TSP delivery-route demo.
+React + Vite + TypeScript frontend for the TSP classroom demo.
 
-This folder is intentionally a base structure only. Do not scaffold Vite or add
-dependencies until the team starts frontend implementation.
+The app currently runs with mock data and a mock solver service so the UI can be
+deployed before the backend APIs are ready.
 
-## Planned Responsibilities
+## Scripts
 
-- Let users choose or enter delivery locations.
-- Display the cost matrix.
-- Call backend APIs for Greedy and Branch and Bound.
-- Compare route, total cost, runtime, and notes.
-- Visualize the selected route using Leaflet/OpenStreetMap or a graph view.
-
-## Planned Structure
-
-```text
-src/
-  api/
-  components/
-  pages/
-  hooks/
-  types/
-  utils/
-  styles/
-  assets/
+```bash
+npm install
+npm run dev
+npm run lint
+npm run test
+npm run build
 ```
 
-## Team Ownership
+## Vercel
 
-- Member 3 owns the main React UI and visualization flow.
-- Member 1 and Member 2 provide backend response contracts to display.
-- Member 4 provides demo scenarios and expected results.
+Use these Vercel project settings:
+
+- Root Directory: `frontend`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+`vercel.json` is included for the same defaults.
+
+## Screens
+
+- Dashboard: dataset selector, algorithm controls, map/graph visualization, matrix, result cards.
+- Dữ liệu: location editor, matrix editor, validation summary.
+- Báo cáo: experiment snapshot, insights, route visualization, comparison table.
+- Hướng dẫn: TSP, Greedy, and Branch and Bound explanation cards.
+
+## Mock API Boundary
+
+The frontend calls `src/services/solverClient.ts`.
+
+When the backend is ready, replace the mock methods with HTTP calls while keeping
+the same contract:
+
+```ts
+type SolveRequest = {
+  start: number;
+  costMatrix: number[][];
+};
+
+type SolveResult = {
+  route: number[];
+  totalCost: number;
+  runtimeMs: number;
+};
+```

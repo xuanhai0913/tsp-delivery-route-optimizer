@@ -1,7 +1,7 @@
-# TSP Delivery Route Optimizer
+# RouteLab Group 1
 
 <p align="center">
-  <strong>Classroom demo app for comparing Greedy nearest-neighbor and Branch and Bound on the Travelling Salesman Problem.</strong>
+  <strong>Classroom route-optimization lab for comparing Greedy nearest-neighbor and Branch and Bound on TSP.</strong>
 </p>
 
 <p align="center">
@@ -65,7 +65,7 @@ The demo compares two strategies:
 ## Architecture
 
 ```text
-tsp-delivery-route-optimizer/
+RouteLab Group 1/
   backend/   Node.js + Express API and TSP algorithms
   frontend/  React + Vite + TypeScript user interface
   data/      Sample locations and cost matrices
