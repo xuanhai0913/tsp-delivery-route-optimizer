@@ -5,19 +5,27 @@
 </p>
 
 <p align="center">
-  <img alt="Project status" src="https://img.shields.io/badge/status-scaffold%20%2B%20design%20preview-2f6f73?style=flat-square">
+  <img alt="Project status" src="https://img.shields.io/badge/status-frontend%20live-2f6f73?style=flat-square">
   <img alt="Frontend" src="https://img.shields.io/badge/frontend-React%20%2B%20Vite-4f46e5?style=flat-square">
   <img alt="Backend" src="https://img.shields.io/badge/backend-Node.js%20%2B%20Express-111827?style=flat-square">
   <img alt="Demo scope" src="https://img.shields.io/badge/demo-5--10%20locations-d97706?style=flat-square">
 </p>
 
 <p align="center">
+  <a href="https://maps.hailamdev.space">Live Frontend</a> ·
   <a href="#preview">Preview</a> ·
   <a href="#features">Features</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#team-plan">Team Plan</a> ·
   <a href="docs/api-contract.md">API Contract</a>
 </p>
+
+## Live Frontend
+
+Production frontend domain: [maps.hailamdev.space](https://maps.hailamdev.space)
+
+The current frontend is deployed with mock data and a mock solver service while
+the backend APIs are still being implemented.
 
 ## Preview
 
@@ -113,15 +121,16 @@ Current state:
 
 - Repository skeleton is ready.
 - UI design previews from Stitch are included in `docs/assets/screenshots/`.
-- Backend/frontend implementation has not started yet.
-- No dependencies are installed yet.
+- Frontend UI is implemented and available at [maps.hailamdev.space](https://maps.hailamdev.space).
+- Frontend currently uses mock data and mock solver results until backend APIs are ready.
+- Backend implementation has not started yet.
 
 Next milestone:
 
-1. Scaffold backend and frontend TypeScript projects.
-2. Add sample data and validation rules.
-3. Implement Greedy and Branch and Bound APIs.
-4. Build the main solver dashboard based on the preview screens.
+1. Implement backend validation and solving APIs.
+2. Replace the frontend mock solver client with HTTP API calls.
+3. Add real sample datasets shared between backend and frontend.
+4. Prepare final report screenshots from the production frontend domain.
 
 ## Documentation
 
@@ -129,5 +138,6 @@ Next milestone:
 - [Algorithm notes](docs/algorithms.md)
 - [Test cases](docs/test-cases.md)
 - [Demo script](docs/demo-script.md)
+- [Brand assets](docs/brand-assets.md)
 - [Report outline](docs/report/README.md)
 - [Slides outline](docs/slides/README.md)

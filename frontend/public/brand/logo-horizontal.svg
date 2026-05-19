@@ -1,0 +1,14 @@
+<svg width="960" height="260" viewBox="0 0 960 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="260" rx="32" fill="#F3F6FB"/>
+  <rect x="52" y="42" width="176" height="176" rx="40" fill="#00796B"/>
+  <path d="M100 94H148C166.778 94 182 109.222 182 128C182 146.778 166.778 162 148 162H104" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <path d="M100 94L138 132L100 170" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="100" cy="94" r="18" fill="#00796B" stroke="white" stroke-width="10"/>
+  <circle cx="182" cy="128" r="18" fill="#00796B" stroke="white" stroke-width="10"/>
+  <circle cx="100" cy="170" r="18" fill="#00796B" stroke="#F59E0B" stroke-width="10"/>
+  <text x="272" y="118" fill="#0F172A" font-family="Avenir Next, Avenir, Helvetica, Arial, sans-serif" font-size="58" font-weight="800">RouteLab Group 1</text>
+  <text x="276" y="166" fill="#475569" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="600">Greedy vs Branch and Bound route optimizer</text>
+  <path d="M276 196H516" stroke="#00796B" stroke-width="8" stroke-linecap="round"/>
+  <path d="M532 196H610" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
+  <path d="M626 196H704" stroke="#38BDF8" stroke-width="8" stroke-linecap="round"/>
+</svg>

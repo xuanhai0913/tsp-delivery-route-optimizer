@@ -5,6 +5,21 @@ React + Vite + TypeScript frontend for the TSP classroom demo.
 The app currently runs with mock data and a mock solver service so the UI can be
 deployed before the backend APIs are ready.
 
+## Production Domain
+
+Frontend production URL: [maps.hailamdev.space](https://maps.hailamdev.space)
+
+## Brand Assets
+
+Favicons, app icons, and logo files live in `public/`.
+
+- `public/favicon.svg`
+- `public/favicon.ico`
+- `public/apple-touch-icon.png`
+- `public/brand/logo-mark.svg`
+- `public/brand/logo-horizontal.svg`
+- `public/brand/og-image.png`
+
 ## Scripts
 
 ```bash
@@ -17,7 +32,7 @@ npm run build
 
 ## Vercel
 
-Use these Vercel project settings:
+Use these Vercel project settings when deploying the frontend directly:
 
 - Root Directory: `frontend`
 - Build Command: `npm run build`
@@ -25,6 +40,9 @@ Use these Vercel project settings:
 - Install Command: `npm install`
 
 `vercel.json` is included for the same defaults.
+
+The repository root also includes a `vercel.json` that builds `frontend/` and
+outputs `frontend/dist`, so deploying from the repo root is supported too.
 
 ## Screens
 

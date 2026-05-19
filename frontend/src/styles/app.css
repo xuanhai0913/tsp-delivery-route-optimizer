@@ -102,13 +102,10 @@ p {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
   width: 46px;
   height: 46px;
   border-radius: 8px;
-  background: var(--teal);
-  color: #ffffff;
+  object-fit: contain;
 }
 
 .brand-mark.small {

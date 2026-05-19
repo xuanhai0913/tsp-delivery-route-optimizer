@@ -45,9 +45,7 @@ export function AppShell({
     <div className="app-shell">
       <aside className="sidebar" aria-label="Điều hướng chính">
         <div className="brand-block">
-          <div className="brand-mark" aria-hidden="true">
-            <Route size={24} />
-          </div>
+          <img className="brand-mark" src="/brand/logo-mark.svg" alt="" aria-hidden="true" />
           <div>
             <p className="brand-title">RouteLab Group 1</p>
             <p className="brand-subtitle">Tối ưu hóa Vận tải</p>
@@ -93,9 +91,7 @@ export function AppShell({
       <div className="workspace">
         <header className="topbar">
           <div className="mobile-brand">
-            <div className="brand-mark small" aria-hidden="true">
-              <Route size={18} />
-            </div>
+            <img className="brand-mark small" src="/brand/logo-mark.svg" alt="" aria-hidden="true" />
             <span>RouteLab Group 1</span>
           </div>
 
