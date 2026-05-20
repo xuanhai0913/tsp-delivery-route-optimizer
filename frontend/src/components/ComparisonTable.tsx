@@ -25,7 +25,7 @@ export function ComparisonTable({ rows }: ComparisonTableProps) {
                   <span className={`algorithm-dot ${row.algorithm}`} />
                   <strong>{row.name}</strong>
                 </td>
-                <td className="route-cell">{row.route.join("-")}</td>
+                <td className="route-cell">{row.route.join(" → ")}</td>
                 <td className={row.isBestCost ? "highlight-cost" : ""}>
                   {row.totalCost.toFixed(1)}
                   {row.isBestCost ? <span className="tiny-badge">Ngắn nhất</span> : null}

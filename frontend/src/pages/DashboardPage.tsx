@@ -16,7 +16,9 @@ import { CostMatrixTable } from "../components/CostMatrixTable";
 import { GraphVisualization } from "../components/GraphVisualization";
 import { LocationList } from "../components/LocationList";
 import { ResultCard } from "../components/ResultCard";
+import { RoutePlaybackPanel } from "../components/RoutePlaybackPanel";
 import { ValidationMessage } from "../components/ValidationMessage";
+import { useRoutePlayback } from "../hooks/useRoutePlayback";
 import type { AlgorithmKey, Dataset, SolverState, ValidationIssue } from "../types/tsp";
 import { buildComparisonRows } from "../utils/route";
 import { hasBlockingIssue } from "../utils/validation";
@@ -65,6 +67,7 @@ export function DashboardPage({
   const comparisonRows = useMemo(() => buildComparisonRows(results), [results]);
   const isBlocked = useMemo(() => hasBlockingIssue(validationIssues), [validationIssues]);
   const anySolving = Boolean(solving.greedy || solving.branchAndBound);
+  const playback = useRoutePlayback({ dataset, results });
 
   const toggleRoute = (algorithm: AlgorithmKey) => {
     setVisibleRoutes((current) => ({ ...current, [algorithm]: !current[algorithm] }));
@@ -199,10 +202,26 @@ export function DashboardPage({
                   onClick={() => toggleRoute("branchAndBound")}
                 >
                   <span />
-                  B&B
+                  Branch & Bound
                 </button>
               </div>
             </div>
+
+            <RoutePlaybackPanel
+              dataset={dataset}
+              availableAlgorithms={playback.availableAlgorithms}
+              selectedAlgorithm={playback.selectedAlgorithm}
+              onAlgorithmChange={playback.setSelectedAlgorithm}
+              isPlaying={playback.isPlaying}
+              speed={playback.speed}
+              speedOptions={playback.speedOptions}
+              onSpeedChange={playback.setSpeed}
+              snapshot={playback.snapshot}
+              onTogglePlay={playback.togglePlay}
+              onReset={playback.reset}
+              onStepNext={playback.stepNext}
+              onStepPrevious={playback.stepPrevious}
+            />
 
             <div className="visual-body">
               {visualTab === "map" ? (
@@ -212,10 +231,16 @@ export function DashboardPage({
                     results={results}
                     visibleRoutes={visibleRoutes}
                     start={start}
+                    playback={playback.snapshot}
                   />
                 </Suspense>
               ) : (
-                <GraphVisualization dataset={dataset} results={results} visibleRoutes={visibleRoutes} />
+                <GraphVisualization
+                  dataset={dataset}
+                  results={results}
+                  visibleRoutes={visibleRoutes}
+                  playback={playback.snapshot}
+                />
               )}
               <div className="map-note">
                 <Info size={16} />
@@ -244,12 +269,18 @@ export function DashboardPage({
             result={results.greedy}
             locations={dataset.locations}
             isLoading={solving.greedy}
+            activeStep={playback.snapshot.activeStep}
+            isPlaybackTarget={Boolean(results.greedy && playback.selectedAlgorithm === "greedy")}
+            onSelectPlayback={playback.setSelectedAlgorithm}
           />
           <ResultCard
             algorithm="branchAndBound"
             result={results.branchAndBound}
             locations={dataset.locations}
             isLoading={solving.branchAndBound}
+            activeStep={playback.snapshot.activeStep}
+            isPlaybackTarget={Boolean(results.branchAndBound && playback.selectedAlgorithm === "branchAndBound")}
+            onSelectPlayback={playback.setSelectedAlgorithm}
           />
         </div>
 

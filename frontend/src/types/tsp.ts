@@ -44,3 +44,28 @@ export type ComparisonRow = {
   isBestCost: boolean;
   isFastest: boolean;
 };
+
+export type Coordinate = [number, number];
+
+export type RouteSegment = {
+  stepIndex: number;
+  from: number;
+  to: number;
+  fromCoordinate: Coordinate;
+  toCoordinate: Coordinate;
+  edgeCost: number;
+  cumulativeCost: number;
+};
+
+export type RoutePlaybackSnapshot = {
+  algorithm?: AlgorithmKey;
+  segments: RouteSegment[];
+  segmentCount: number;
+  activeStep: number;
+  completedStepCount: number;
+  segmentProgress: number;
+  currentSegment?: RouteSegment;
+  movingPosition?: Coordinate;
+  currentCost: number;
+  isComplete: boolean;
+};

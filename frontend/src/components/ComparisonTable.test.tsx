@@ -14,5 +14,6 @@ describe("ComparisonTable", () => {
 
     expect(screen.getByText("Ngắn nhất")).toBeInTheDocument();
     expect(screen.getByText("Nhanh nhất")).toBeInTheDocument();
+    expect(screen.getByText("0 → 2 → 1 → 0")).toBeInTheDocument();
   });
 });

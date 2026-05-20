@@ -7,15 +7,51 @@ type ResultCardProps = {
   result?: SolveResult;
   locations: Location[];
   isLoading?: boolean;
+  activeStep?: number;
+  isPlaybackTarget?: boolean;
+  onSelectPlayback?: (algorithm: AlgorithmKey) => void;
 };
 
-export function ResultCard({ algorithm, result, locations, isLoading = false }: ResultCardProps) {
+export function ResultCard({
+  algorithm,
+  result,
+  locations,
+  isLoading = false,
+  activeStep,
+  isPlaybackTarget = false,
+  onSelectPlayback,
+}: ResultCardProps) {
   const isGreedy = algorithm === "greedy";
   const title = isGreedy ? "Greedy (Tham lam)" : "Branch and Bound";
   const Icon = isGreedy ? Zap : GitBranch;
+  const canSelectPlayback = Boolean(result && onSelectPlayback);
 
   return (
-    <article className={`result-card ${isGreedy ? "greedy" : "branch"}`}>
+    <article
+      className={[
+        "result-card",
+        isGreedy ? "greedy" : "branch",
+        isPlaybackTarget ? "playback-target" : "",
+      ].join(" ")}
+      role={canSelectPlayback ? "button" : undefined}
+      tabIndex={canSelectPlayback ? 0 : undefined}
+      onClick={() => {
+        if (canSelectPlayback) {
+          onSelectPlayback?.(algorithm);
+        }
+      }}
+      onMouseEnter={() => {
+        if (canSelectPlayback) {
+          onSelectPlayback?.(algorithm);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (canSelectPlayback && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onSelectPlayback?.(algorithm);
+        }
+      }}
+    >
       <div className="result-card-head">
         <div className="section-title-inline">
           <Icon size={22} />
@@ -46,6 +82,8 @@ export function ResultCard({ algorithm, result, locations, isLoading = false }: 
               route={result.route}
               locations={locations}
               tone={isGreedy ? "greedy" : "branch"}
+              activeStep={activeStep}
+              isPlaybackTarget={isPlaybackTarget}
             />
           </div>
         </>
