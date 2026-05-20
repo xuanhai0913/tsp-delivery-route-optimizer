@@ -1,0 +1,56 @@
+name: Git Discord Notifications
+
+on:
+  push:
+    branches:
+      - main
+  issues:
+    types:
+      - opened
+      - reopened
+      - closed
+      - edited
+      - assigned
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - closed
+      - synchronize
+      - ready_for_review
+  workflow_run:
+    workflows:
+      - Backend Algorithm CI
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: git-discord-notifications-${{ github.event_name }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  notify-discord:
+    name: Notify Discord git channel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Send compact Discord notification
+        env:
+          DISCORD_GIT_WEBHOOK_URL: ${{ secrets.DISCORD_GIT_WEBHOOK_URL }}
+          DISCORD_GIT_MENTION: ${{ secrets.DISCORD_GIT_MENTION }}
+        run: node .github/scripts/notify-git-discord.mjs

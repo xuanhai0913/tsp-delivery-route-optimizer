@@ -44,6 +44,8 @@ Set these in GitHub repository settings:
 | `GEMINI_API_KEY` | Yes | Runs backend AI review with `gemini-2.5-flash`. |
 | `DISCORD_WEBHOOK_URL` | Optional | Sends backend AI review result to a Discord channel. |
 | `DISCORD_MENTION` | Optional | Mentions a user or role when the AI review gate fails, for example `<@123>` or `<@&456>`. |
+| `DISCORD_GIT_WEBHOOK_URL` | Optional | Sends compact Git, issue, PR, and backend CI notifications to `#git-notification`. |
+| `DISCORD_GIT_MENTION` | Optional | Mentions a user or role when the backend CI notification reports a failure. |
 
 The backend deploy gate fails when AI review finds at least 1 critical issue or more than 5 warnings.
 AI review content is written in Vietnamese. GitHub Actions keeps the full review summary, while Discord receives a compact notification with counts, a short summary, up to 3 highlighted issues, and a workflow link.
@@ -58,6 +60,8 @@ To notify Discord:
 4. Add it to GitHub Actions secrets as `DISCORD_WEBHOOK_URL`.
 
 If the webhook secret is missing, CI skips Discord notification without failing.
+
+General Git notifications are documented in `docs/git-notifications.md`.
 
 ## Health Checks
 
