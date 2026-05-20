@@ -4,9 +4,19 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-export function validateSolveRequest(request: SolveRequest): ValidationIssue[] {
+export function validateSolveRequest(request: unknown): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const { start, costMatrix } = request;
+
+  if (typeof request !== "object" || request === null) {
+    return [
+      {
+        code: "request-invalid",
+        message: "Request body must be a JSON object."
+      }
+    ];
+  }
+
+  const { start, costMatrix } = request as Partial<SolveRequest>;
 
   if (!Number.isInteger(start)) {
     issues.push({
@@ -23,7 +33,7 @@ export function validateSolveRequest(request: SolveRequest): ValidationIssue[] {
     return issues;
   }
 
-  if (start < 0 || start >= costMatrix.length) {
+  if (typeof start === "number" && Number.isInteger(start) && (start < 0 || start >= costMatrix.length)) {
     issues.push({
       code: "start-out-of-range",
       message: "Start index must be inside the matrix range."

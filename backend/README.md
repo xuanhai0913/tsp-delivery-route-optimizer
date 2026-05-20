@@ -2,16 +2,37 @@
 
 Node.js + Express backend for solving the TSP delivery-route problem.
 
-This folder contains the backend TypeScript test harness for algorithm work.
-Runtime Express APIs are still planned, but backend CI is already available for
-validators, route utilities, and future Greedy / Branch and Bound tests.
+This folder contains the backend TypeScript + Express API for algorithm work.
+The service is prepared for Render deployment as `routelab-backend`.
 
-## Planned Responsibilities
+## Responsibilities
 
 - Read and validate cost matrix input.
 - Expose solving APIs under `/api/solve`.
 - Run Greedy nearest-neighbor and Branch and Bound algorithms.
 - Return route, total cost, and runtime in milliseconds.
+
+## API
+
+```text
+GET /health
+GET /health/db
+POST /api/solve/greedy
+POST /api/solve/branch-and-bound
+```
+
+Solve request:
+
+```json
+{
+  "start": 0,
+  "costMatrix": [
+    [0, 10, 15],
+    [10, 0, 20],
+    [15, 20, 0]
+  ]
+}
+```
 
 ## Planned Structure
 
@@ -61,9 +82,24 @@ data:
 ```bash
 cd backend
 npm ci
-npm run typecheck
-npm run test
+npm run ci
 ```
 
 GitHub Actions runs the same checks in `Backend Algorithm CI` whenever a PR or
 push touches `backend/**`, `data/**`, or the backend workflow file.
+
+## Local Run
+
+```bash
+cd backend
+npm ci
+npm run dev
+```
+
+The API runs on `http://localhost:3000` by default.
+
+## Deployment
+
+Render deployment is configured by `/render.yaml`.
+Railway PostgreSQL is provided through `DATABASE_URL` as a Render secret.
+Detailed setup notes are in `docs/backend-deploy-render.md`.

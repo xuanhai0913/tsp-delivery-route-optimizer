@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: routelab-backend
+    runtime: node
+    rootDir: backend
+    branch: main
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22
+      - key: CORS_ORIGIN
+        value: https://maps.hailamdev.space
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "false"
