@@ -35,6 +35,28 @@ describe("backend HTTP API", () => {
     expect(response.body.runtimeMs).toBeGreaterThanOrEqual(0);
   });
 
+  it("lists demo datasets for the frontend", async () => {
+    const response = await request(app).get("/api/datasets").expect(200);
+
+    expect(response.body.datasets).toContainEqual({
+      id: "hcm-7",
+      name: "Ho Chi Minh City demo route",
+      locationCount: 7,
+      defaultStart: 0
+    });
+  });
+
+  it("returns a selected demo dataset with locations and matrix", async () => {
+    const response = await request(app).get("/api/datasets/hcm-7").expect(200);
+
+    expect(response.body).toMatchObject({
+      id: "hcm-7",
+      defaultStart: 0
+    });
+    expect(response.body.locations).toHaveLength(7);
+    expect(response.body.costMatrix).toHaveLength(7);
+  });
+
   it("rejects invalid solve requests", async () => {
     const response = await request(app)
       .post("/api/solve/branch-and-bound")

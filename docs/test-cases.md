@@ -3,9 +3,9 @@
 Planned verification checklist for Member 4.
 
 - Valid matrix with 3 locations for basic route and total-cost calculation.
-- Valid matrix with 5-10 locations for demo.
+- Valid matrix with 5-10 locations for demo: `data/samples/hcm-7.json`.
 - Case where Greedy and Branch and Bound return the same cost.
-- Case where Greedy is faster but not optimal, if available.
+- Case where Greedy is faster but not optimal: use the 5-location matrix covered in `backend/src/algorithms/greedy/greedy.test.ts`.
 - Invalid start index.
 - Non-square matrix.
 - Matrix containing non-numeric values.

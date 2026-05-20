@@ -16,6 +16,21 @@ export type Location = {
   lng?: number;
 };
 
+export type Dataset = {
+  id: string;
+  name: string;
+  locations: Location[];
+  costMatrix: number[][];
+  defaultStart: number;
+};
+
+export type DatasetSummary = {
+  id: string;
+  name: string;
+  locationCount: number;
+  defaultStart: number;
+};
+
 export type ValidationIssue = {
   code: string;
   message: string;

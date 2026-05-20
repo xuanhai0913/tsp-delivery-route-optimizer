@@ -4,3 +4,5 @@
 - Planned endpoints:
   - `POST /api/solve/greedy`
   - `POST /api/solve/branch-and-bound`
+  - `GET /api/datasets`
+  - `GET /api/datasets/:id`

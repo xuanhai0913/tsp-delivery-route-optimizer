@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
+import { datasetRouter } from "./routes/datasetRoutes.js";
 import { healthRouter } from "./routes/healthRoutes.js";
 import { solveRouter } from "./routes/solveRoutes.js";
 
@@ -35,6 +36,7 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "1mb" }));
 
   app.use("/health", healthRouter);
+  app.use("/api/datasets", datasetRouter);
   app.use("/api/solve", solveRouter);
 
   app.use(notFoundHandler);

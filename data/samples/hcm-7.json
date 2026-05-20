@@ -1,0 +1,58 @@
+{
+  "id": "hcm-7",
+  "name": "Ho Chi Minh City demo route",
+  "defaultStart": 0,
+  "locations": [
+    {
+      "id": 0,
+      "name": "Central Post Office",
+      "lat": 10.7798,
+      "lng": 106.699
+    },
+    {
+      "id": 1,
+      "name": "Ben Thanh Market",
+      "lat": 10.7725,
+      "lng": 106.698
+    },
+    {
+      "id": 2,
+      "name": "Independence Palace",
+      "lat": 10.777,
+      "lng": 106.6953
+    },
+    {
+      "id": 3,
+      "name": "Turtle Lake",
+      "lat": 10.7828,
+      "lng": 106.6955
+    },
+    {
+      "id": 4,
+      "name": "Tan Dinh Church",
+      "lat": 10.789,
+      "lng": 106.6908
+    },
+    {
+      "id": 5,
+      "name": "War Remnants Museum",
+      "lat": 10.7794,
+      "lng": 106.692
+    },
+    {
+      "id": 6,
+      "name": "Saigon Zoo",
+      "lat": 10.7866,
+      "lng": 106.7057
+    }
+  ],
+  "costMatrix": [
+    [0, 6, 4, 5, 9, 5, 7],
+    [6, 0, 5, 8, 12, 7, 11],
+    [4, 5, 0, 4, 8, 3, 9],
+    [5, 8, 4, 0, 5, 3, 7],
+    [9, 12, 8, 5, 0, 6, 10],
+    [5, 7, 3, 3, 6, 0, 8],
+    [7, 11, 9, 7, 10, 8, 0]
+  ]
+}
