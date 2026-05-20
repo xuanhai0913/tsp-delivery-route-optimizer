@@ -130,6 +130,7 @@ jobs:
           DISCORD_MENTION: ${{ secrets.DISCORD_MENTION }}
           AI_REVIEW_EXIT_CODE: ${{ env.AI_REVIEW_EXIT_CODE }}
           AI_REVIEW_SUMMARY_PATH: .github/ai-review-summary.md
+          AI_REVIEW_RESULT_PATH: .github/ai-review-result.json
         run: node .github/scripts/notify-discord.mjs
 
       - name: Enforce AI review gate

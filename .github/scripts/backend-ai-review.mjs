@@ -11,7 +11,7 @@ function asIssueArray(value) {
     ? value.map((issue) => ({
         file: String(issue.file ?? "unknown"),
         line: issue.line === null || issue.line === undefined ? null : Number(issue.line),
-        title: String(issue.title ?? "Review finding"),
+        title: String(issue.title ?? "Phát hiện khi review"),
         detail: String(issue.detail ?? ""),
         recommendation: String(issue.recommendation ?? "")
       }))
@@ -25,7 +25,7 @@ function extractJson(text) {
   const lastBrace = candidate.lastIndexOf("}");
 
   if (firstBrace === -1 || lastBrace === -1) {
-    throw new Error("AI response did not contain a JSON object.");
+    throw new Error("Phản hồi AI không chứa JSON object hợp lệ.");
   }
 
   return JSON.parse(candidate.slice(firstBrace, lastBrace + 1));
@@ -33,13 +33,13 @@ function extractJson(text) {
 
 function toMarkdownList(issues) {
   if (issues.length === 0) {
-    return "- None";
+    return "- Không có";
   }
 
   return issues
     .map((issue) => {
       const location = issue.line ? `${issue.file}:${issue.line}` : issue.file;
-      const recommendation = issue.recommendation ? `\n  - Fix: ${issue.recommendation}` : "";
+      const recommendation = issue.recommendation ? `\n  - Gợi ý sửa: ${issue.recommendation}` : "";
       return `- **${issue.title}** (${location})\n  - ${issue.detail}${recommendation}`;
     })
     .join("\n");
@@ -52,19 +52,19 @@ async function writeReviewFiles(review, gate) {
   };
 
   const markdown = [
-    "# Backend AI Review",
+    "# AI Review Backend",
     "",
-    `Status: **${gate.passed ? "passed" : "failed"}**`,
-    `Critical findings: **${review.critical.length}**`,
-    `Warnings: **${review.warnings.length}**`,
+    `Trạng thái: **${gate.passed ? "đạt" : "không đạt"}**`,
+    `Lỗi nghiêm trọng: **${review.critical.length}**`,
+    `Cảnh báo: **${review.warnings.length}**`,
     "",
-    "## Summary",
-    review.summary || "No summary provided.",
+    "## Tóm tắt",
+    review.summary || "Không có tóm tắt.",
     "",
-    "## Critical",
+    "## Lỗi nghiêm trọng",
     toMarkdownList(review.critical),
     "",
-    "## Warnings",
+    "## Cảnh báo",
     toMarkdownList(review.warnings),
     ""
   ].join("\n");
@@ -76,14 +76,14 @@ async function writeReviewFiles(review, gate) {
 async function main() {
   if (!apiKey) {
     const review = {
-      summary: "GEMINI_API_KEY is not configured, so the backend AI review cannot run.",
+      summary: "Chưa cấu hình GEMINI_API_KEY nên không thể chạy AI review cho backend.",
       critical: [
         {
           file: ".github/workflows/backend-algorithm-ci.yml",
           line: null,
-          title: "Missing GEMINI_API_KEY secret",
-          detail: "Add GEMINI_API_KEY as a GitHub Actions secret before allowing backend deploys.",
-          recommendation: "Repository Settings > Secrets and variables > Actions > New repository secret."
+          title: "Thiếu secret GEMINI_API_KEY",
+          detail: "Cần thêm GEMINI_API_KEY vào GitHub Actions secrets trước khi cho phép deploy backend.",
+          recommendation: "Vào Repository Settings > Secrets and variables > Actions > New repository secret."
         }
       ],
       warnings: []
@@ -97,7 +97,7 @@ async function main() {
   if (!diff.trim()) {
     await writeReviewFiles(
       {
-        summary: "No backend or data diff was detected for review.",
+        summary: "Không phát hiện thay đổi backend hoặc data cần review.",
         critical: [],
         warnings: []
       },
@@ -107,11 +107,12 @@ async function main() {
   }
 
   const prompt = [
-    "You are a strict senior backend reviewer for a Node.js + Express + TypeScript TSP route optimizer.",
-    "Review the provided git diff for real bugs only: algorithm correctness, runtime crashes, security leaks, database misuse, deploy blockers, broken API contracts, and missing tests for risky behavior.",
-    "Do not report style preferences, formatting, naming, or harmless refactors.",
-    "Classify as critical only if it can break production, expose secrets, corrupt data, make deploy fail, or produce clearly wrong algorithm results.",
-    "Return strict JSON only with this shape:",
+    "Bạn là senior backend reviewer nghiêm khắc cho dự án Node.js + Express + TypeScript tối ưu lộ trình TSP.",
+    "Hãy review git diff bên dưới và chỉ báo lỗi thật: sai thuật toán, crash runtime, lộ secret, dùng database sai, blocker deploy, vỡ API contract, hoặc thiếu test cho thay đổi rủi ro.",
+    "Không báo lỗi về style, format, đặt tên, hoặc refactor vô hại.",
+    "Chỉ phân loại critical nếu lỗi có thể làm hỏng production, lộ secret, mất/sai dữ liệu, fail deploy, hoặc tạo kết quả thuật toán sai rõ ràng.",
+    "Toàn bộ nội dung trong summary, title, detail, recommendation phải viết bằng tiếng Việt ngắn gọn, dễ hiểu cho sinh viên trong team.",
+    "Trả về strict JSON duy nhất theo shape này, không thêm markdown:",
     '{"summary":"string","critical":[{"file":"string","line":number|null,"title":"string","detail":"string","recommendation":"string"}],"warnings":[{"file":"string","line":number|null,"title":"string","detail":"string","recommendation":"string"}]}',
     "",
     "Git diff:",
@@ -139,14 +140,14 @@ async function main() {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Gemini API request failed with ${response.status}: ${detail.slice(0, 500)}`);
+    throw new Error(`Gọi Gemini API thất bại với status ${response.status}: ${detail.slice(0, 500)}`);
   }
 
   const payload = await response.json();
   const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text).join("\n") ?? "";
   const parsed = extractJson(text);
   const review = {
-    summary: String(parsed.summary ?? "Backend AI review completed."),
+    summary: String(parsed.summary ?? "AI review backend đã hoàn tất."),
     critical: asIssueArray(parsed.critical),
     warnings: asIssueArray(parsed.warnings)
   };
@@ -164,14 +165,14 @@ async function main() {
 
 main().catch(async (error) => {
   const review = {
-    summary: "Backend AI review failed to complete.",
+    summary: "AI review backend không chạy xong.",
     critical: [
       {
         file: ".github/scripts/backend-ai-review.mjs",
         line: null,
-        title: "AI review execution failed",
+        title: "Lỗi khi chạy AI review",
         detail: error instanceof Error ? error.message : String(error),
-        recommendation: "Check GEMINI_API_KEY, model availability, and GitHub Actions network access."
+        recommendation: "Kiểm tra GEMINI_API_KEY, model Gemini, và network của GitHub Actions."
       }
     ],
     warnings: []

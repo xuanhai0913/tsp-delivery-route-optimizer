@@ -46,6 +46,7 @@ Set these in GitHub repository settings:
 | `DISCORD_MENTION` | Optional | Mentions a user or role when the AI review gate fails, for example `<@123>` or `<@&456>`. |
 
 The backend deploy gate fails when AI review finds at least 1 critical issue or more than 5 warnings.
+AI review content is written in Vietnamese. GitHub Actions keeps the full review summary, while Discord receives a compact notification with counts, a short summary, up to 3 highlighted issues, and a workflow link.
 
 ## Discord Webhook
 
