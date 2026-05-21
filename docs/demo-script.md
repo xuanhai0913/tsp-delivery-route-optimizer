@@ -1,13 +1,10 @@
 # Demo Script
 
-Planned classroom demo flow.
-
-1. Introduce TSP in the delivery-route context.
-2. Select a sample location set with 5-10 locations.
-3. Show the cost matrix.
-4. Run Greedy and explain nearest-neighbor choice.
-5. Run Branch and Bound and explain pruning/search tree idea.
-6. Compare route, total cost, and runtime.
-7. Show the selected route on the map or graph.
-8. Conclude: Greedy is fast but may be non-optimal; Branch and Bound is optimal
-   for small inputs but gets expensive quickly.
+1. Introduce RouteLab as a shortest-path visualization lab, not a Google Maps clone.
+2. Explain the graph input: nodes are places, weighted edges are possible connections.
+3. Choose source and target on the Dashboard.
+4. Run Dijkstra and explain distance relaxation.
+5. Run A* and explain `f(n) = g(n) + h(n)`.
+6. Compare path, total cost, runtime, and visited node count.
+7. Show playback on Map and Graph tabs.
+8. Conclude: Dijkstra is the reliable baseline; A* can be faster when the heuristic guides search well.

@@ -4,31 +4,31 @@ import { mockDatasets } from "../data/mockDatasets";
 import { ResultCard } from "./ResultCard";
 
 describe("ResultCard", () => {
-  it("renders route sequence and metrics", () => {
+  it("renders path sequence and metrics", () => {
     render(
       <ResultCard
-        algorithm="greedy"
-        locations={mockDatasets[0].locations}
-        result={{ route: [0, 1, 0], totalCost: 8.4, runtimeMs: 2.1 }}
+        algorithm="dijkstra"
+        nodes={mockDatasets[0].nodes}
+        result={{ path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 8.4, visitedOrder: [1, 2, 5, 3, 6] }}
       />
     );
 
-    expect(screen.getByText(/Greedy/i)).toBeInTheDocument();
-    expect(screen.getByText("8.4")).toBeInTheDocument();
-    expect(screen.getByText("2 ms")).toBeInTheDocument();
+    expect(screen.getByText(/Dijkstra/i)).toBeInTheDocument();
+    expect(screen.getByText("7.5")).toBeInTheDocument();
+    expect(screen.getByText("8.4 ms")).toBeInTheDocument();
   });
 
   it("highlights the active playback chip", () => {
     render(
       <ResultCard
-        algorithm="greedy"
-        locations={mockDatasets[0].locations}
-        result={{ route: [0, 1, 2, 0], totalCost: 12, runtimeMs: 2 }}
+        algorithm="aStar"
+        nodes={mockDatasets[0].nodes}
+        result={{ path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 5.7 }}
         activeStep={1}
         isPlaybackTarget
       />
     );
 
-    expect(screen.getAllByText("2")[0]).toHaveClass("active");
+    expect(screen.getAllByText("3")[0]).toHaveClass("active");
   });
 });

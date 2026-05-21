@@ -2,23 +2,25 @@ import { lazy, Suspense, useMemo } from "react";
 import { Download, FileDown, MapPinned, TrendingUp } from "lucide-react";
 import { ComparisonTable } from "../components/ComparisonTable";
 import { GraphVisualization } from "../components/GraphVisualization";
-import type { Dataset, SolverState } from "../types/tsp";
+import type { Dataset, SolverState } from "../types/path";
 import { buildComparisonRows } from "../utils/route";
 
 const RouteMap = lazy(() => import("../components/RouteMap"));
 
 type ReportPageProps = {
   dataset: Dataset;
-  start: number;
+  source: number;
+  target: number;
   results: SolverState;
   onExportJson: () => void;
   onExportPng: () => void;
 };
 
-export function ReportPage({ dataset, start, results, onExportJson, onExportPng }: ReportPageProps) {
+export function ReportPage({ dataset, source, target, results, onExportJson, onExportPng }: ReportPageProps) {
   const comparisonRows = useMemo(() => buildComparisonRows(results), [results]);
-  const visibleRoutes = { greedy: true, branchAndBound: true };
-  const startLocation = dataset.locations.find((location) => location.id === start);
+  const visibleRoutes = { dijkstra: true, aStar: true };
+  const sourceNode = dataset.nodes.find((node) => node.id === source);
+  const targetNode = dataset.nodes.find((node) => node.id === target);
   const bestCostRow = comparisonRows.find((row) => row.isBestCost);
   const fastestRow = comparisonRows.find((row) => row.isFastest);
 
@@ -27,7 +29,7 @@ export function ReportPage({ dataset, start, results, onExportJson, onExportPng 
       <div className="page-header-row">
         <div>
           <h1>Kết quả thực nghiệm</h1>
-          <p>Snapshot báo cáo tổng quan hiệu suất cho bộ dữ liệu đang chọn.</p>
+          <p>Snapshot báo cáo hiệu suất cho bài toán shortest path đang chọn.</p>
         </div>
         <div className="header-actions">
           <button className="secondary-button" type="button" onClick={onExportJson}>
@@ -45,24 +47,24 @@ export function ReportPage({ dataset, start, results, onExportJson, onExportPng 
         <section className="panel summary-card">
           <div className="section-title-inline">
             <MapPinned size={22} />
-            <h2>Tóm tắt tập dữ liệu</h2>
+            <h2>Tóm tắt graph</h2>
           </div>
           <dl>
             <div>
-              <dt>Số lượng điểm:</dt>
-              <dd>{dataset.locations.length} Node</dd>
+              <dt>Nodes:</dt>
+              <dd>{dataset.nodes.length}</dd>
             </div>
             <div>
-              <dt>Điểm xuất phát:</dt>
-              <dd>{startLocation?.name ?? start}</dd>
+              <dt>Edges:</dt>
+              <dd>{dataset.edges.length}</dd>
+            </div>
+            <div>
+              <dt>Nguồn → đích:</dt>
+              <dd>{sourceNode?.name ?? source} → {targetNode?.name ?? target}</dd>
             </div>
             <div>
               <dt>Bộ dữ liệu:</dt>
               <dd>{dataset.name}</dd>
-            </div>
-            <div>
-              <dt>Mã phiên chạy:</dt>
-              <dd>RUN-2026-05</dd>
             </div>
           </dl>
         </section>
@@ -70,7 +72,7 @@ export function ReportPage({ dataset, start, results, onExportJson, onExportPng 
         <section className="insight-card">
           <div className="section-title-inline">
             <TrendingUp size={23} />
-            <h2>Nhận xét chính (Key Insights)</h2>
+            <h2>Nhận xét chính</h2>
           </div>
           <ul>
             <li>
@@ -84,8 +86,7 @@ export function ReportPage({ dataset, start, results, onExportJson, onExportPng 
                 : "Runtime sẽ hiển thị sau khi mock solver hoàn tất."}
             </li>
             <li>
-              Greedy phù hợp phản hồi nhanh; Branch and Bound dùng để chứng minh nghiệm tối ưu với
-              dữ liệu nhỏ.
+              Dijkstra là baseline chắc chắn; A* dùng heuristic tọa độ để ưu tiên hướng gần đích.
             </li>
           </ul>
         </section>
@@ -95,16 +96,12 @@ export function ReportPage({ dataset, start, results, onExportJson, onExportPng 
         <div className="panel-heading">
           <div className="section-title-inline">
             <MapPinned size={23} />
-            <h2>Trực quan hóa lộ trình tối ưu</h2>
-          </div>
-          <div className="small-segmented">
-            <button type="button">Bản đồ nhiệt</button>
-            <button type="button">Lưới tọa độ</button>
+            <h2>Trực quan hóa shortest path</h2>
           </div>
         </div>
         <div className="report-map-grid">
           <Suspense fallback={<div className="map-skeleton">Đang tải bản đồ...</div>}>
-            <RouteMap dataset={dataset} results={results} visibleRoutes={visibleRoutes} start={start} />
+            <RouteMap dataset={dataset} results={results} visibleRoutes={visibleRoutes} source={source} target={target} />
           </Suspense>
           <GraphVisualization dataset={dataset} results={results} visibleRoutes={visibleRoutes} />
         </div>

@@ -1,7 +1,7 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
-import type { Dataset, DatasetSummary, Location, ValidationIssue } from "../types/tsp.js";
+import type { Dataset, DatasetSummary, GraphEdge, GraphNode, ValidationIssue } from "../types/path.js";
 import { validateSolveRequest } from "../validators/solveRequestValidator.js";
 
 const DATASET_ID_PATTERN = /^[a-z0-9-]+$/;
@@ -31,17 +31,36 @@ async function getSamplesDirectory(): Promise<string> {
   throw new Error("Dataset samples directory was not found.");
 }
 
-function isLocation(value: unknown): value is Location {
+function isGraphNode(value: unknown): value is GraphNode {
   if (typeof value !== "object" || value === null) {
     return false;
   }
 
-  const location = value as Partial<Location>;
-  const hasValidCoordinates =
-    (location.lat === undefined || typeof location.lat === "number") &&
-    (location.lng === undefined || typeof location.lng === "number");
+  const node = value as Partial<GraphNode>;
+  return (
+    Number.isInteger(node.id) &&
+    typeof node.name === "string" &&
+    node.name.length > 0 &&
+    typeof node.lat === "number" &&
+    typeof node.lng === "number"
+  );
+}
 
-  return Number.isInteger(location.id) && typeof location.name === "string" && location.name.length > 0 && hasValidCoordinates;
+function isGraphEdge(value: unknown): value is GraphEdge {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const edge = value as Partial<GraphEdge>;
+  return (
+    typeof edge.id === "string" &&
+    edge.id.length > 0 &&
+    Number.isInteger(edge.from) &&
+    Number.isInteger(edge.to) &&
+    typeof edge.weight === "number" &&
+    Number.isFinite(edge.weight) &&
+    edge.weight >= 0
+  );
 }
 
 function validateDataset(dataset: Partial<Dataset>): ValidationIssue[] {
@@ -61,45 +80,36 @@ function validateDataset(dataset: Partial<Dataset>): ValidationIssue[] {
     });
   }
 
-  if (!Array.isArray(dataset.locations) || dataset.locations.length === 0) {
+  if (typeof dataset.directed !== "boolean") {
     issues.push({
-      code: "dataset-locations-invalid",
-      message: "Dataset locations must be a non-empty array."
-    });
-  } else if (!dataset.locations.every(isLocation)) {
-    issues.push({
-      code: "dataset-location-invalid",
-      message: "Each dataset location must include id and name."
+      code: "dataset-directed-invalid",
+      message: "Dataset directed flag must be boolean."
     });
   }
 
-  if (Array.isArray(dataset.locations)) {
-    const ids = new Set(dataset.locations.map((location) => location.id));
-    if (ids.size !== dataset.locations.length) {
-      issues.push({
-        code: "dataset-location-ids-duplicate",
-        message: "Dataset location ids must be unique."
-      });
-    }
+  if (!Array.isArray(dataset.nodes) || dataset.nodes.length === 0 || !dataset.nodes.every(isGraphNode)) {
+    issues.push({
+      code: "dataset-nodes-invalid",
+      message: "Dataset nodes must include id, name, lat, and lng."
+    });
+  }
+
+  if (!Array.isArray(dataset.edges) || dataset.edges.length === 0 || !dataset.edges.every(isGraphEdge)) {
+    issues.push({
+      code: "dataset-edges-invalid",
+      message: "Dataset edges must include id, from, to, and weight."
+    });
   }
 
   issues.push(
     ...validateSolveRequest({
-      start: dataset.defaultStart,
-      costMatrix: dataset.costMatrix
+      source: dataset.defaultSource,
+      target: dataset.defaultTarget,
+      nodes: dataset.nodes,
+      edges: dataset.edges,
+      directed: dataset.directed
     })
   );
-
-  if (
-    Array.isArray(dataset.locations) &&
-    Array.isArray(dataset.costMatrix) &&
-    dataset.locations.length !== dataset.costMatrix.length
-  ) {
-    issues.push({
-      code: "dataset-size-mismatch",
-      message: "Location count must match cost matrix size."
-    });
-  }
 
   return issues;
 }
@@ -108,8 +118,10 @@ function toSummary(dataset: Dataset): DatasetSummary {
   return {
     id: dataset.id,
     name: dataset.name,
-    locationCount: dataset.locations.length,
-    defaultStart: dataset.defaultStart
+    nodeCount: dataset.nodes.length,
+    edgeCount: dataset.edges.length,
+    defaultSource: dataset.defaultSource,
+    defaultTarget: dataset.defaultTarget
   };
 }
 

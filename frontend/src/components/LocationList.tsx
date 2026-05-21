@@ -1,27 +1,37 @@
-import type { Location } from "../types/tsp";
+import type { GraphNode } from "../types/path";
 
 type LocationListProps = {
-  locations: Location[];
-  start: number;
+  nodes: GraphNode[];
+  source: number;
+  target: number;
 };
 
-export function LocationList({ locations, start }: LocationListProps) {
+export function LocationList({ nodes, source, target }: LocationListProps) {
   return (
-    <div className="location-list">
-      <div className="table-title">Danh sách địa điểm</div>
+    <div className="panel location-list-panel">
+      <div className="section-title-inline">
+        <span className="mini-icon" aria-hidden="true">
+          ⬢
+        </span>
+        <h2>Graph nodes</h2>
+      </div>
       <div className="location-table-wrap">
         <table className="location-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Tên địa điểm</th>
+              <th>Tên node</th>
+              <th>Vai trò</th>
             </tr>
           </thead>
           <tbody>
-            {locations.map((location) => (
-              <tr key={location.id} className={location.id === start ? "selected" : ""}>
-                <td>{location.id}</td>
-                <td>{location.name}</td>
+            {nodes.map((node) => (
+              <tr key={node.id} className={node.id === source || node.id === target ? "start-row" : ""}>
+                <td>{node.id}</td>
+                <td>{node.name}</td>
+                <td>
+                  {node.id === source ? "Nguồn" : node.id === target ? "Đích" : "Trung gian"}
+                </td>
               </tr>
             ))}
           </tbody>

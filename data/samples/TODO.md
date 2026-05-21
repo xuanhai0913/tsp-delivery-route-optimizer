@@ -1,5 +1,5 @@
-# Sample Data TODO
+# Samples TODO
 
-- [x] Add demo location sets with 5-10 locations.
-- [x] Add matching JSON cost matrices.
-- Include at least one case where Greedy is not optimal if possible.
+- Add at least one graph where A* visits fewer nodes than Dijkstra.
+- Keep weights non-negative.
+- Include source/target pairs that produce multi-edge paths for demo playback.

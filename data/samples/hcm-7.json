@@ -1,8 +1,11 @@
 {
   "id": "hcm-7",
-  "name": "Ho Chi Minh City demo route",
-  "defaultStart": 0,
-  "locations": [
+  "name": "Ho Chi Minh City shortest-path graph",
+  "description": "Demo graph with 7 landmarks around central Ho Chi Minh City for Dijkstra and A* visualization.",
+  "directed": false,
+  "defaultSource": 1,
+  "defaultTarget": 6,
+  "nodes": [
     {
       "id": 0,
       "name": "Central Post Office",
@@ -46,13 +49,162 @@
       "lng": 106.7057
     }
   ],
-  "costMatrix": [
-    [0, 6, 4, 5, 9, 5, 7],
-    [6, 0, 5, 8, 12, 7, 11],
-    [4, 5, 0, 4, 8, 3, 9],
-    [5, 8, 4, 0, 5, 3, 7],
-    [9, 12, 8, 5, 0, 6, 10],
-    [5, 7, 3, 3, 6, 0, 8],
-    [7, 11, 9, 7, 10, 8, 0]
+  "edges": [
+    {
+      "id": "e0-1",
+      "from": 0,
+      "to": 1,
+      "weight": 3.4,
+      "label": "Le Loi",
+      "geometry": [
+        { "lat": 10.7798, "lng": 106.699 },
+        { "lat": 10.7772, "lng": 106.7002 },
+        { "lat": 10.7742, "lng": 106.6997 },
+        { "lat": 10.7725, "lng": 106.698 }
+      ]
+    },
+    {
+      "id": "e0-2",
+      "from": 0,
+      "to": 2,
+      "weight": 2.1,
+      "label": "Dong Khoi",
+      "geometry": [
+        { "lat": 10.7798, "lng": 106.699 },
+        { "lat": 10.7791, "lng": 106.6972 },
+        { "lat": 10.7782, "lng": 106.6961 },
+        { "lat": 10.777, "lng": 106.6953 }
+      ]
+    },
+    {
+      "id": "e0-3",
+      "from": 0,
+      "to": 3,
+      "weight": 3.2,
+      "label": "Hai Ba Trung",
+      "geometry": [
+        { "lat": 10.7798, "lng": 106.699 },
+        { "lat": 10.7812, "lng": 106.6982 },
+        { "lat": 10.7824, "lng": 106.6968 },
+        { "lat": 10.7828, "lng": 106.6955 }
+      ]
+    },
+    {
+      "id": "e1-2",
+      "from": 1,
+      "to": 2,
+      "weight": 2.5,
+      "label": "Le Thanh Ton",
+      "geometry": [
+        { "lat": 10.7725, "lng": 106.698 },
+        { "lat": 10.7738, "lng": 106.6967 },
+        { "lat": 10.7755, "lng": 106.6959 },
+        { "lat": 10.777, "lng": 106.6953 }
+      ]
+    },
+    {
+      "id": "e1-5",
+      "from": 1,
+      "to": 5,
+      "weight": 4.6,
+      "label": "Truong Dinh",
+      "geometry": [
+        { "lat": 10.7725, "lng": 106.698 },
+        { "lat": 10.7742, "lng": 106.6961 },
+        { "lat": 10.7766, "lng": 106.6938 },
+        { "lat": 10.7794, "lng": 106.692 }
+      ]
+    },
+    {
+      "id": "e2-3",
+      "from": 2,
+      "to": 3,
+      "weight": 2.2,
+      "label": "Pasteur",
+      "geometry": [
+        { "lat": 10.777, "lng": 106.6953 },
+        { "lat": 10.779, "lng": 106.695 },
+        { "lat": 10.7811, "lng": 106.6952 },
+        { "lat": 10.7828, "lng": 106.6955 }
+      ]
+    },
+    {
+      "id": "e2-5",
+      "from": 2,
+      "to": 5,
+      "weight": 1.3,
+      "label": "Nam Ky Khoi Nghia",
+      "geometry": [
+        { "lat": 10.777, "lng": 106.6953 },
+        { "lat": 10.7778, "lng": 106.6938 },
+        { "lat": 10.7786, "lng": 106.6928 },
+        { "lat": 10.7794, "lng": 106.692 }
+      ]
+    },
+    {
+      "id": "e3-4",
+      "from": 3,
+      "to": 4,
+      "weight": 2.7,
+      "label": "Tran Cao Van",
+      "geometry": [
+        { "lat": 10.7828, "lng": 106.6955 },
+        { "lat": 10.7842, "lng": 106.6941 },
+        { "lat": 10.7868, "lng": 106.6923 },
+        { "lat": 10.789, "lng": 106.6908 }
+      ]
+    },
+    {
+      "id": "e3-5",
+      "from": 3,
+      "to": 5,
+      "weight": 1.5,
+      "label": "Vo Van Tan",
+      "geometry": [
+        { "lat": 10.7828, "lng": 106.6955 },
+        { "lat": 10.7815, "lng": 106.6945 },
+        { "lat": 10.7801, "lng": 106.6932 },
+        { "lat": 10.7794, "lng": 106.692 }
+      ]
+    },
+    {
+      "id": "e3-6",
+      "from": 3,
+      "to": 6,
+      "weight": 2.8,
+      "label": "Nguyen Binh Khiem",
+      "geometry": [
+        { "lat": 10.7828, "lng": 106.6955 },
+        { "lat": 10.7839, "lng": 106.6984 },
+        { "lat": 10.7851, "lng": 106.702 },
+        { "lat": 10.7866, "lng": 106.7057 }
+      ]
+    },
+    {
+      "id": "e4-5",
+      "from": 4,
+      "to": 5,
+      "weight": 4.0,
+      "label": "Dien Bien Phu",
+      "geometry": [
+        { "lat": 10.789, "lng": 106.6908 },
+        { "lat": 10.7868, "lng": 106.6917 },
+        { "lat": 10.7832, "lng": 106.6919 },
+        { "lat": 10.7794, "lng": 106.692 }
+      ]
+    },
+    {
+      "id": "e4-6",
+      "from": 4,
+      "to": 6,
+      "weight": 3.1,
+      "label": "Nguyen Huu Canh",
+      "geometry": [
+        { "lat": 10.789, "lng": 106.6908 },
+        { "lat": 10.7892, "lng": 106.695 },
+        { "lat": 10.7883, "lng": 106.7007 },
+        { "lat": 10.7866, "lng": 106.7057 }
+      ]
+    }
   ]
 }

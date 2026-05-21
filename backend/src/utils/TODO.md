@@ -1,4 +1,5 @@
 # Utils TODO
 
-- Add small shared helpers only when multiple backend modules need them.
-- Possible helpers: route cost calculation, runtime measurement, matrix checks.
+- Keep shared graph helpers here.
+- Add runtime measurement helpers if solvers need more detailed instrumentation.
+- Add path reconstruction helpers once Dijkstra and A* are implemented.

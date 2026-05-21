@@ -1,49 +1,47 @@
-import type { ComparisonRow } from "../types/tsp";
+import type { ComparisonRow } from "../types/path";
+import { pathToLabel } from "../utils/route";
 
 type ComparisonTableProps = {
   rows: ComparisonRow[];
 };
 
 export function ComparisonTable({ rows }: ComparisonTableProps) {
+  if (rows.length === 0) {
+    return <p className="empty-state">Chưa có kết quả để so sánh. Hãy chạy Dijkstra hoặc A*.</p>;
+  }
+
   return (
-    <div className="comparison-wrap">
-      <table className="comparison-table" aria-label="Bảng so sánh hiệu suất">
+    <div className="comparison-table-wrap">
+      <table className="comparison-table" aria-label="Bảng so sánh hiệu suất shortest path">
         <thead>
           <tr>
             <th>Thuật toán</th>
-            <th>Lộ trình</th>
-            <th>Tổng chi phí (km)</th>
-            <th>Thời gian chạy (ms)</th>
+            <th>Path</th>
+            <th>Tổng chi phí</th>
+            <th>Runtime (ms)</th>
+            <th>Visited</th>
             <th>Nhận xét</th>
           </tr>
         </thead>
         <tbody>
-          {rows.length > 0 ? (
-            rows.map((row) => (
-              <tr key={row.algorithm}>
-                <td>
-                  <span className={`algorithm-dot ${row.algorithm}`} />
-                  <strong>{row.name}</strong>
-                </td>
-                <td className="route-cell">{row.route.join(" → ")}</td>
-                <td className={row.isBestCost ? "highlight-cost" : ""}>
-                  {row.totalCost.toFixed(1)}
-                  {row.isBestCost ? <span className="tiny-badge">Ngắn nhất</span> : null}
-                </td>
-                <td className={row.isFastest ? "highlight-fast" : ""}>
-                  {row.runtimeMs.toFixed(0)}
-                  {row.isFastest ? <span className="tiny-badge">Nhanh nhất</span> : null}
-                </td>
-                <td>{row.note}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={5} className="empty-table-cell">
-                Chưa có kết quả. Hãy chạy Greedy, Branch and Bound hoặc chạy cả hai.
+          {rows.map((row) => (
+            <tr key={row.algorithm}>
+              <td>
+                <strong>{row.name}</strong>
               </td>
+              <td className="route-cell">{pathToLabel(row.path)}</td>
+              <td className={row.isBestCost ? "best-cell" : ""}>
+                {row.totalCost}
+                {row.isBestCost ? <span>Ngắn nhất</span> : null}
+              </td>
+              <td className={row.isFastest ? "best-cell" : ""}>
+                {row.runtimeMs}
+                {row.isFastest ? <span>Nhanh nhất</span> : null}
+              </td>
+              <td>{row.visitedCount}</td>
+              <td>{row.note}</td>
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
     </div>

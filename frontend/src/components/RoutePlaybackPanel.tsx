@@ -6,7 +6,7 @@ import {
   Play,
   RotateCcw,
 } from "lucide-react";
-import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot } from "../types/tsp";
+import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot } from "../types/path";
 import { getResultLabel } from "../utils/route";
 
 type RoutePlaybackPanelProps = {
@@ -25,12 +25,12 @@ type RoutePlaybackPanelProps = {
   onStepPrevious: () => void;
 };
 
-function locationName(dataset: Dataset, id?: number) {
+function nodeName(dataset: Dataset, id?: number) {
   if (id === undefined) {
-    return "Chưa có điểm";
+    return "Chưa có node";
   }
 
-  return dataset.locations.find((location) => location.id === id)?.name ?? `Điểm ${id}`;
+  return dataset.nodes.find((node) => node.id === id)?.name ?? `Node ${id}`;
 }
 
 export function RoutePlaybackPanel({
@@ -53,8 +53,9 @@ export function RoutePlaybackPanel({
   }
 
   const currentSegment = snapshot.currentSegment;
-  const fromName = locationName(dataset, currentSegment?.from);
-  const toName = locationName(dataset, currentSegment?.to);
+  const currentTraceStep = snapshot.currentTraceStep;
+  const fromName = nodeName(dataset, currentSegment?.from);
+  const toName = nodeName(dataset, currentSegment?.to);
   const stepLabel = snapshot.isComplete
     ? `${snapshot.segmentCount}/${snapshot.segmentCount}`
     : `${snapshot.activeStep + 1}/${snapshot.segmentCount}`;
@@ -65,19 +66,17 @@ export function RoutePlaybackPanel({
   );
 
   return (
-    <div className="playback-panel" aria-label="Điều khiển mô phỏng lộ trình">
+    <div className="playback-panel" aria-label="Điều khiển mô phỏng shortest path">
       <div className="playback-topline">
         <div>
-          <span className="playback-kicker">Playback mode</span>
+          <span className="playback-kicker">Algorithm replay</span>
           <h3>
-            {snapshot.isComplete
-              ? "Route đã hoàn tất"
-              : `Từ ${currentSegment?.from ?? "-"} → ${currentSegment?.to ?? "-"}`}
+            {snapshot.isComplete ? "Replay đã hoàn tất" : currentTraceStep?.message ?? `Từ ${currentSegment?.from ?? "-"} → ${currentSegment?.to ?? "-"}`}
           </h3>
         </div>
 
         <div className="playback-algorithms" role="group" aria-label="Chọn thuật toán playback">
-          {(["greedy", "branchAndBound"] as AlgorithmKey[]).map((algorithm) => (
+          {(["dijkstra", "aStar"] as AlgorithmKey[]).map((algorithm) => (
             <button
               key={algorithm}
               type="button"
@@ -86,7 +85,7 @@ export function RoutePlaybackPanel({
               onClick={() => onAlgorithmChange(algorithm)}
             >
               <span className={`algorithm-dot ${algorithm}`} />
-              {algorithm === "greedy" ? "Greedy" : "Branch & Bound"}
+              {algorithm === "dijkstra" ? "Dijkstra" : "A*"}
             </button>
           ))}
         </div>
@@ -138,15 +137,21 @@ export function RoutePlaybackPanel({
         <div>
           <span>Cạnh hiện tại</span>
           <strong>
-            {snapshot.isComplete ? "Đã quay về kho" : `${fromName} → ${toName}`}
+            {snapshot.isComplete
+              ? "Đã tới đích"
+              : currentSegment
+                ? `${fromName} → ${toName}`
+                : currentTraceStep?.currentNode !== undefined
+                  ? `Đang xét node ${currentTraceStep.currentNode}`
+                  : "--"}
           </strong>
         </div>
         <div>
-          <span>Cost cạnh</span>
-          <strong>{currentSegment ? currentSegment.edgeCost.toFixed(1) : "0.0"}</strong>
+          <span>Weight cạnh</span>
+          <strong>{currentSegment ? currentSegment.edgeCost.toFixed(1) : "--"}</strong>
         </div>
         <div>
-          <span>Cost đã đi</span>
+          <span>{selectedAlgorithm === "aStar" ? "g(n) hiện tại" : "Dist hiện tại"}</span>
           <strong>{snapshot.currentCost.toFixed(1)}</strong>
         </div>
       </div>

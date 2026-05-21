@@ -6,14 +6,14 @@ import { ComparisonTable } from "./ComparisonTable";
 describe("ComparisonTable", () => {
   it("highlights best cost and fastest runtime", () => {
     const rows = buildComparisonRows({
-      greedy: { route: [0, 1, 0], totalCost: 20, runtimeMs: 2 },
-      branchAndBound: { route: [0, 2, 1, 0], totalCost: 18, runtimeMs: 145 },
+      dijkstra: { path: [0, 1, 2], totalCost: 9, runtimeMs: 8, visitedOrder: [0, 1, 2] },
+      aStar: { path: [0, 1, 2], totalCost: 9, runtimeMs: 5, visitedOrder: [0, 2] },
     });
 
     render(<ComparisonTable rows={rows} />);
 
-    expect(screen.getByText("Ngắn nhất")).toBeInTheDocument();
+    expect(screen.getAllByText("Ngắn nhất")).toHaveLength(2);
     expect(screen.getByText("Nhanh nhất")).toBeInTheDocument();
-    expect(screen.getByText("0 → 2 → 1 → 0")).toBeInTheDocument();
+    expect(screen.getAllByText("0 → 1 → 2")[0]).toBeInTheDocument();
   });
 });

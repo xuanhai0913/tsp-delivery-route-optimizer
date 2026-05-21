@@ -1,5 +1,5 @@
-# Backend Tests TODO
+# Tests TODO
 
-- Add unit tests for Greedy and Branch and Bound.
-- Add validation tests for invalid matrices and start indexes.
-- Add API tests after Express routes are implemented.
+- Add solver tests for Dijkstra once implemented.
+- Add solver tests for A* and heuristic behavior once implemented.
+- Keep HTTP tests for dataset loading, validation, and solver endpoint status.

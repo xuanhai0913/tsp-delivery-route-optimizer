@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot, SolverState } from "../types/tsp";
-import { buildRouteSegments, interpolateCoordinate } from "../utils/routeAnimation";
+import type { AlgorithmKey, AlgorithmTraceStep, Dataset, PathSegment, RoutePlaybackSnapshot, SolverState } from "../types/path";
+import { edgeToCoordinates, findEdge } from "../utils/route";
+import { buildPathSegments, interpolatePolylineCoordinate } from "../utils/routeAnimation";
 
 const DEFAULT_SEGMENT_DURATION_MS = 900;
-const DEFAULT_PLAYBACK_ALGORITHM: AlgorithmKey = "branchAndBound";
+const DEFAULT_PLAYBACK_ALGORITHM: AlgorithmKey = "aStar";
 const SPEED_OPTIONS = [0.5, 1, 1.5, 2] as const;
+const EMPTY_TRACE_STEPS: AlgorithmTraceStep[] = [];
 type PlaybackSpeed = (typeof SPEED_OPTIONS)[number];
 
 type RoutePlaybackParams = {
@@ -18,17 +20,17 @@ type PlaybackState = {
 };
 
 function getPreferredAlgorithm(results: SolverState): AlgorithmKey {
-  if (results.branchAndBound) {
-    return "branchAndBound";
+  if (results.aStar) {
+    return "aStar";
   }
 
-  return "greedy";
+  return "dijkstra";
 }
 
-function getRouteSignature(results: SolverState): string {
+function getPathSignature(results: SolverState): string {
   return [
-    results.greedy?.route.join("-") ?? "none",
-    results.branchAndBound?.route.join("-") ?? "none",
+    `${results.dijkstra?.path.join("-") ?? "none"}:${results.dijkstra?.traceSteps?.length ?? 0}`,
+    `${results.aStar?.path.join("-") ?? "none"}:${results.aStar?.traceSteps?.length ?? 0}`,
   ].join("|");
 }
 
@@ -61,16 +63,18 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
   });
 
   const prefersReducedMotion = usePrefersReducedMotion();
-  const resultSignature = useMemo(() => getRouteSignature(results), [results]);
+  const resultSignature = useMemo(() => getPathSignature(results), [results]);
   const selectedResult = results[selectedAlgorithm];
   const segments = useMemo(
     () =>
       selectedResult
-        ? buildRouteSegments(selectedResult.route, dataset.locations, dataset.costMatrix)
+        ? buildPathSegments(selectedResult.path, dataset.nodes, dataset.edges, dataset.directed)
         : [],
-    [dataset.costMatrix, dataset.locations, selectedResult]
+    [dataset.directed, dataset.edges, dataset.nodes, selectedResult]
   );
-  const segmentCount = segments.length;
+  const traceSteps = selectedResult?.traceSteps ?? EMPTY_TRACE_STEPS;
+  const isTraceMode = traceSteps.length > 0;
+  const segmentCount = isTraceMode ? traceSteps.length : segments.length;
   const latestStateRef = useRef(playbackState);
   const frameRef = useRef<number>();
   const lastTimestampRef = useRef<number>();
@@ -80,7 +84,7 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
   }, [playbackState]);
 
   useEffect(() => {
-    if (!results.greedy && !results.branchAndBound) {
+    if (!results.dijkstra && !results.aStar) {
       setIsPlaying(false);
       setPlaybackState({ activeStep: 0, segmentProgress: 0 });
       return;
@@ -210,13 +214,33 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
     const activeStep = Math.min(playbackState.activeStep, segmentCount);
     const isComplete = segmentCount > 0 && activeStep >= segmentCount;
     const completedStepCount = isComplete ? segmentCount : activeStep;
-    const currentSegment = isComplete ? undefined : segments[activeStep];
+    const currentTraceStep = isTraceMode && !isComplete ? traceSteps[activeStep] : undefined;
+    const completedTraceSteps = isTraceMode ? traceSteps.slice(0, completedStepCount) : [];
+    const currentSegment = isTraceMode
+      ? buildSegmentFromTraceStep(currentTraceStep, dataset, activeStep)
+      : isComplete
+        ? undefined
+        : segments[activeStep];
     const segmentProgress = isComplete ? 1 : playbackState.segmentProgress;
     const previousCost =
-      activeStep > 0 ? segments[activeStep - 1]?.cumulativeCost ?? 0 : 0;
+      !isTraceMode && activeStep > 0 ? segments[activeStep - 1]?.cumulativeCost ?? 0 : 0;
+    const finalCost = selectedResult?.totalCost ?? segments.at(-1)?.cumulativeCost ?? 0;
+    const tracedCurrentNodeMetric = currentTraceStep?.nodes.find(
+      (node) => node.node === currentTraceStep.currentNode
+    );
     const currentCost = currentSegment
-      ? Number((previousCost + currentSegment.edgeCost * segmentProgress).toFixed(2))
-      : segments.at(-1)?.cumulativeCost ?? 0;
+      ? isTraceMode
+        ? Number((currentSegment.cumulativeCost - currentSegment.edgeCost + currentSegment.edgeCost * segmentProgress).toFixed(2))
+        : Number((previousCost + currentSegment.edgeCost * segmentProgress).toFixed(2))
+      : isTraceMode
+        ? currentTraceStep?.phase === "final-path" || isComplete
+          ? Number(finalCost.toFixed(2))
+          : tracedCurrentNodeMetric?.distance ?? tracedCurrentNodeMetric?.gCost ?? 0
+        : finalCost;
+    const currentNode = currentTraceStep?.currentNode;
+    const currentNodeCoordinate = currentNode === undefined
+      ? undefined
+      : dataset.nodes.find((node) => node.id === currentNode);
 
     return {
       algorithm: selectedResult ? selectedAlgorithm : undefined,
@@ -227,17 +251,33 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
       segmentProgress,
       currentSegment,
       movingPosition: currentSegment
-        ? interpolateCoordinate(currentSegment.fromCoordinate, currentSegment.toCoordinate, segmentProgress)
-        : segments.at(-1)?.toCoordinate,
+        ? interpolatePolylineCoordinate(currentSegment.coordinates, segmentProgress)
+        : currentNodeCoordinate
+          ? [currentNodeCoordinate.lat, currentNodeCoordinate.lng]
+          : segments.at(-1)?.toCoordinate,
       currentCost,
       isComplete,
+      traceSteps,
+      currentTraceStep,
+      completedTraceSteps,
+      isTraceMode,
     };
-  }, [playbackState.activeStep, playbackState.segmentProgress, segmentCount, segments, selectedAlgorithm, selectedResult]);
+  }, [
+    dataset,
+    isTraceMode,
+    playbackState.activeStep,
+    playbackState.segmentProgress,
+    segmentCount,
+    segments,
+    selectedAlgorithm,
+    selectedResult,
+    traceSteps,
+  ]);
 
   return {
     availableAlgorithms: {
-      greedy: Boolean(results.greedy),
-      branchAndBound: Boolean(results.branchAndBound),
+      dijkstra: Boolean(results.dijkstra),
+      aStar: Boolean(results.aStar),
     },
     selectedAlgorithm,
     setSelectedAlgorithm,
@@ -252,5 +292,41 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
     reset,
     stepNext,
     stepPrevious,
+  };
+}
+
+function buildSegmentFromTraceStep(
+  traceStep: RoutePlaybackSnapshot["currentTraceStep"],
+  dataset: Dataset,
+  stepIndex: number
+): PathSegment | undefined {
+  if (!traceStep?.relaxedEdge) {
+    return undefined;
+  }
+
+  const { from, to, weight, cumulativeCost } = traceStep.relaxedEdge;
+  const fromNode = dataset.nodes.find((node) => node.id === from);
+  const toNode = dataset.nodes.find((node) => node.id === to);
+  const edge = findEdge(from, to, dataset.edges, dataset.directed);
+
+  if (!fromNode || !toNode) {
+    return undefined;
+  }
+
+  const fromCoordinate: [number, number] = [fromNode.lat, fromNode.lng];
+  const toCoordinate: [number, number] = [toNode.lat, toNode.lng];
+  const coordinates = edge
+    ? edgeToCoordinates(edge, dataset.nodes, dataset.directed, from, to)
+    : [fromCoordinate, toCoordinate];
+
+  return {
+    stepIndex,
+    from,
+    to,
+    fromCoordinate,
+    toCoordinate,
+    coordinates: coordinates.length >= 2 ? coordinates : [fromCoordinate, toCoordinate],
+    edgeCost: weight,
+    cumulativeCost,
   };
 }

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import {
   Database,
-  Expand,
   GitBranch,
   Info,
   Map,
@@ -9,17 +8,19 @@ import {
   RefreshCcw,
   Route,
   Table2,
+  Waypoints,
   Zap,
 } from "lucide-react";
+import { AlgorithmStateTable } from "../components/AlgorithmStateTable";
 import { ComparisonTable } from "../components/ComparisonTable";
-import { CostMatrixTable } from "../components/CostMatrixTable";
 import { GraphVisualization } from "../components/GraphVisualization";
 import { LocationList } from "../components/LocationList";
+import { PriorityQueuePanel } from "../components/PriorityQueuePanel";
 import { ResultCard } from "../components/ResultCard";
 import { RoutePlaybackPanel } from "../components/RoutePlaybackPanel";
 import { ValidationMessage } from "../components/ValidationMessage";
 import { useRoutePlayback } from "../hooks/useRoutePlayback";
-import type { AlgorithmKey, Dataset, SolverState, ValidationIssue } from "../types/tsp";
+import type { AlgorithmKey, Dataset, SolverState, ValidationIssue } from "../types/path";
 import { buildComparisonRows } from "../utils/route";
 import { hasBlockingIssue } from "../utils/validation";
 
@@ -28,15 +29,17 @@ const RouteMap = lazy(() => import("../components/RouteMap"));
 type DashboardPageProps = {
   dataset: Dataset;
   datasets: Dataset[];
-  start: number;
+  source: number;
+  target: number;
   results: SolverState;
   solving: Partial<Record<AlgorithmKey, boolean>>;
   statusMessage: string;
   validationIssues: ValidationIssue[];
   onDatasetChange: (dataset: Dataset) => void;
-  onStartChange: (start: number) => void;
-  onRunGreedy: () => void;
-  onRunBranchAndBound: () => void;
+  onSourceChange: (source: number) => void;
+  onTargetChange: (target: number) => void;
+  onRunDijkstra: () => void;
+  onRunAStar: () => void;
   onRunBoth: () => void;
   onResetResults: () => void;
 };
@@ -46,27 +49,29 @@ type VisualTab = "map" | "graph";
 export function DashboardPage({
   dataset,
   datasets,
-  start,
+  source,
+  target,
   results,
   solving,
   statusMessage,
   validationIssues,
   onDatasetChange,
-  onStartChange,
-  onRunGreedy,
-  onRunBranchAndBound,
+  onSourceChange,
+  onTargetChange,
+  onRunDijkstra,
+  onRunAStar,
   onRunBoth,
   onResetResults,
 }: DashboardPageProps) {
   const [visualTab, setVisualTab] = useState<VisualTab>("map");
   const [visibleRoutes, setVisibleRoutes] = useState<Record<AlgorithmKey, boolean>>({
-    greedy: true,
-    branchAndBound: true,
+    dijkstra: true,
+    aStar: true,
   });
 
   const comparisonRows = useMemo(() => buildComparisonRows(results), [results]);
   const isBlocked = useMemo(() => hasBlockingIssue(validationIssues), [validationIssues]);
-  const anySolving = Boolean(solving.greedy || solving.branchAndBound);
+  const anySolving = Boolean(solving.dijkstra || solving.aStar);
   const playback = useRoutePlayback({ dataset, results });
 
   const toggleRoute = (algorithm: AlgorithmKey) => {
@@ -79,7 +84,7 @@ export function DashboardPage({
         <div className="panel">
           <div className="section-title-inline">
             <Database size={23} />
-            <h2>Dữ liệu đầu vào</h2>
+            <h2>Dữ liệu graph</h2>
           </div>
 
           <label className="field-label" htmlFor="dataset">
@@ -102,45 +107,56 @@ export function DashboardPage({
             ))}
           </select>
 
-          <label className="field-label" htmlFor="start">
-            Điểm xuất phát
+          <label className="field-label" htmlFor="source">
+            Nguồn
           </label>
-          <select id="start" value={start} onChange={(event) => onStartChange(Number(event.target.value))}>
-            {dataset.locations.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.id} - {location.name}
+          <select id="source" value={source} onChange={(event) => onSourceChange(Number(event.target.value))}>
+            {dataset.nodes.map((node) => (
+              <option key={node.id} value={node.id}>
+                {node.id} - {node.name}
+              </option>
+            ))}
+          </select>
+
+          <label className="field-label" htmlFor="target">
+            Đích
+          </label>
+          <select id="target" value={target} onChange={(event) => onTargetChange(Number(event.target.value))}>
+            {dataset.nodes.map((node) => (
+              <option key={node.id} value={node.id}>
+                {node.id} - {node.name}
               </option>
             ))}
           </select>
 
           <button className="soft-button" type="button" onClick={() => onDatasetChange(dataset)}>
-            Nạp dữ liệu
+            Nạp graph
           </button>
         </div>
 
         <div className="panel">
           <div className="section-title-inline">
             <Play size={23} />
-            <h2>Điều khiển Thuật toán</h2>
+            <h2>Điều khiển thuật toán</h2>
           </div>
 
           <button
             className="run-button greedy"
             type="button"
-            disabled={isBlocked || Boolean(solving.greedy)}
-            onClick={onRunGreedy}
+            disabled={isBlocked || Boolean(solving.dijkstra)}
+            onClick={onRunDijkstra}
           >
-            <Zap size={18} />
-            {solving.greedy ? "Đang chạy Greedy" : "Chạy Greedy"}
+            <Waypoints size={18} />
+            {solving.dijkstra ? "Đang chạy Dijkstra" : "Chạy Dijkstra"}
           </button>
           <button
             className="run-button branch"
             type="button"
-            disabled={isBlocked || Boolean(solving.branchAndBound)}
-            onClick={onRunBranchAndBound}
+            disabled={isBlocked || Boolean(solving.aStar)}
+            onClick={onRunAStar}
           >
-            <GitBranch size={18} />
-            {solving.branchAndBound ? "Đang chạy B&B" : "Chạy Branch and Bound"}
+            <Zap size={18} />
+            {solving.aStar ? "Đang chạy A*" : "Chạy A*"}
           </button>
 
           <div className="or-divider">
@@ -151,7 +167,7 @@ export function DashboardPage({
 
           <button className="run-button compare" type="button" disabled={isBlocked || anySolving} onClick={onRunBoth}>
             <Route size={18} />
-            Chạy cả hai (So sánh)
+            Chạy cả hai
           </button>
           <button className="reset-button" type="button" onClick={onResetResults}>
             <RefreshCcw size={18} />
@@ -161,7 +177,7 @@ export function DashboardPage({
           <p className="status-message">{statusMessage}</p>
         </div>
 
-        <LocationList locations={dataset.locations} start={start} />
+        <LocationList nodes={dataset.nodes} source={source} target={target} />
       </section>
 
       <section className="main-dashboard">
@@ -189,20 +205,20 @@ export function DashboardPage({
 
               <div className="route-toggles">
                 <button
-                  className={visibleRoutes.greedy ? "enabled greedy" : ""}
+                  className={visibleRoutes.dijkstra ? "enabled greedy" : ""}
                   type="button"
-                  onClick={() => toggleRoute("greedy")}
+                  onClick={() => toggleRoute("dijkstra")}
                 >
                   <span />
-                  Greedy
+                  Dijkstra
                 </button>
                 <button
-                  className={visibleRoutes.branchAndBound ? "enabled branch" : ""}
+                  className={visibleRoutes.aStar ? "enabled branch" : ""}
                   type="button"
-                  onClick={() => toggleRoute("branchAndBound")}
+                  onClick={() => toggleRoute("aStar")}
                 >
                   <span />
-                  Branch & Bound
+                  A*
                 </button>
               </div>
             </div>
@@ -223,29 +239,42 @@ export function DashboardPage({
               onStepPrevious={playback.stepPrevious}
             />
 
-            <div className="visual-body">
-              {visualTab === "map" ? (
-                <Suspense fallback={<div className="map-skeleton">Đang tải bản đồ...</div>}>
-                  <RouteMap
+            <div className="visual-demo-layout">
+              <div className="visual-body">
+                {visualTab === "map" ? (
+                  <Suspense fallback={<div className="map-skeleton">Đang tải bản đồ...</div>}>
+                    <RouteMap
+                      dataset={dataset}
+                      results={results}
+                      visibleRoutes={visibleRoutes}
+                      source={source}
+                      target={target}
+                      playback={playback.snapshot}
+                    />
+                  </Suspense>
+                ) : (
+                  <GraphVisualization
                     dataset={dataset}
                     results={results}
                     visibleRoutes={visibleRoutes}
-                    start={start}
                     playback={playback.snapshot}
                   />
-                </Suspense>
-              ) : (
-                <GraphVisualization
-                  dataset={dataset}
-                  results={results}
-                  visibleRoutes={visibleRoutes}
-                  playback={playback.snapshot}
-                />
-              )}
-              <div className="map-note">
-                <Info size={16} />
-                Dữ liệu mẫu, tuyến đường vẽ theo tọa độ demo.
+                )}
+                <div className="map-note">
+                  <Info size={16} />
+                  Replay mô phỏng quá trình thuật toán trên graph demo, không phải dữ liệu Google Maps thật.
+                </div>
               </div>
+
+              {playback.snapshot.isTraceMode && playback.snapshot.algorithm ? (
+                <aside className="algorithm-inspector">
+                  <AlgorithmStateTable
+                    algorithm={playback.snapshot.algorithm}
+                    snapshot={playback.snapshot}
+                  />
+                  <PriorityQueuePanel snapshot={playback.snapshot} />
+                </aside>
+              ) : null}
             </div>
           </div>
 
@@ -253,11 +282,35 @@ export function DashboardPage({
             <div className="panel-heading">
               <div className="section-title-inline">
                 <Table2 size={23} />
-                <h2>Ma trận khoảng cách (km)</h2>
+                <h2>Danh sách cạnh có trọng số</h2>
               </div>
-              <Expand size={20} />
             </div>
-            <CostMatrixTable matrix={dataset.costMatrix} start={start} />
+            <div className="edge-table-wrap">
+              <table className="comparison-table" aria-label="Danh sách cạnh graph">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Weight</th>
+                    <th>Geometry</th>
+                    <th>Label</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataset.edges.map((edge) => (
+                    <tr key={edge.id}>
+                      <td>{edge.id}</td>
+                      <td>{edge.from}</td>
+                      <td>{edge.to}</td>
+                      <td>{edge.weight}</td>
+                      <td>{edge.geometry?.length ?? 2} pts</td>
+                      <td>{edge.label ?? "--"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -265,21 +318,23 @@ export function DashboardPage({
 
         <div className="results-grid">
           <ResultCard
-            algorithm="greedy"
-            result={results.greedy}
-            locations={dataset.locations}
-            isLoading={solving.greedy}
+            algorithm="dijkstra"
+            result={results.dijkstra}
+            nodes={dataset.nodes}
+            isLoading={solving.dijkstra}
             activeStep={playback.snapshot.activeStep}
-            isPlaybackTarget={Boolean(results.greedy && playback.selectedAlgorithm === "greedy")}
+            activeNodeId={playback.snapshot.currentTraceStep?.currentNode}
+            isPlaybackTarget={Boolean(results.dijkstra && playback.selectedAlgorithm === "dijkstra")}
             onSelectPlayback={playback.setSelectedAlgorithm}
           />
           <ResultCard
-            algorithm="branchAndBound"
-            result={results.branchAndBound}
-            locations={dataset.locations}
-            isLoading={solving.branchAndBound}
+            algorithm="aStar"
+            result={results.aStar}
+            nodes={dataset.nodes}
+            isLoading={solving.aStar}
             activeStep={playback.snapshot.activeStep}
-            isPlaybackTarget={Boolean(results.branchAndBound && playback.selectedAlgorithm === "branchAndBound")}
+            activeNodeId={playback.snapshot.currentTraceStep?.currentNode}
+            isPlaybackTarget={Boolean(results.aStar && playback.selectedAlgorithm === "aStar")}
             onSelectPlayback={playback.setSelectedAlgorithm}
           />
         </div>
@@ -287,7 +342,7 @@ export function DashboardPage({
         <section className="panel comparison-panel">
           <div className="section-title-inline">
             <BarChartIcon />
-            <h2>Bảng So Sánh Hiệu Suất</h2>
+            <h2>Bảng so sánh hiệu suất</h2>
           </div>
           <ComparisonTable rows={comparisonRows} />
         </section>

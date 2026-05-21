@@ -1,58 +1,107 @@
 # API Contract
 
-Planned backend API endpoints for the TSP delivery-route optimizer.
+Planned backend API endpoints for the RouteLab shortest-path demo.
 
 ## Shared Types
 
 ```ts
-type SolveRequest = {
-  start: number;
-  costMatrix: number[][];
-};
-
-type SolveResult = {
-  route: number[];
-  totalCost: number;
-  runtimeMs: number;
-};
-
-type Location = {
+type GraphNode = {
   id: number;
   name: string;
-  lat?: number;
-  lng?: number;
+  lat: number;
+  lng: number;
 };
 
-type Dataset = {
-  id: string;
-  name: string;
-  locations: Location[];
-  costMatrix: number[][];
-  defaultStart: number;
+type GeoPoint = {
+  lat: number;
+  lng: number;
 };
 
-type DatasetSummary = {
+type GraphEdge = {
+  id: string;
+  from: number;
+  to: number;
+  weight: number;
+  label?: string;
+  geometry?: GeoPoint[];
+};
+
+type PathDataset = {
   id: string;
   name: string;
-  locationCount: number;
-  defaultStart: number;
+  description?: string;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  directed: boolean;
+  defaultSource: number;
+  defaultTarget: number;
+};
+
+type PathSolveRequest = {
+  source: number;
+  target: number;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  directed?: boolean;
+};
+
+type PathSolveResult = {
+  path: number[];
+  totalCost: number;
+  runtimeMs: number;
+  visitedOrder?: number[];
+  relaxedEdges?: Array<{ from: number; to: number; cumulativeCost: number }>;
+  traceSteps?: AlgorithmTraceStep[];
+};
+
+type QueueEntry = {
+  node: number;
+  priority: number;
+  cost: number;
+  heuristic?: number;
+};
+
+type NodeMetric = {
+  node: number;
+  status: "unvisited" | "queued" | "visited" | "current" | "path";
+  distance?: number;
+  previous?: number;
+  gCost?: number;
+  hCost?: number;
+  fCost?: number;
+};
+
+type AlgorithmTraceStep = {
+  stepIndex: number;
+  phase: "select-current" | "relax-edge" | "final-path";
+  currentNode?: number;
+  relaxedEdge?: {
+    id?: string;
+    from: number;
+    to: number;
+    weight: number;
+    cumulativeCost: number;
+  };
+  queue: QueueEntry[];
+  nodes: NodeMetric[];
+  message: string;
 };
 ```
 
 ## GET `/api/datasets`
 
-Returns demo datasets that the frontend can show in the dataset selector.
-
-### Response
+Returns demo graph datasets that the frontend can show in the dataset selector.
 
 ```json
 {
   "datasets": [
     {
       "id": "hcm-7",
-      "name": "Ho Chi Minh City demo route",
-      "locationCount": 7,
-      "defaultStart": 0
+      "name": "Ho Chi Minh City shortest-path graph",
+      "nodeCount": 7,
+      "edgeCount": 12,
+      "defaultSource": 1,
+      "defaultTarget": 6
     }
   ]
 }
@@ -60,77 +109,88 @@ Returns demo datasets that the frontend can show in the dataset selector.
 
 ## GET `/api/datasets/:id`
 
-Returns one full dataset with locations, coordinates, default start index, and cost matrix.
+Returns one full graph dataset with nodes, coordinates, weighted edges, and default source/target.
 
-### Response
+## POST `/api/solve/dijkstra`
 
-```json
-{
-  "id": "hcm-7",
-  "name": "Ho Chi Minh City demo route",
-  "defaultStart": 0,
-  "locations": [
-    {
-      "id": 0,
-      "name": "Central Post Office",
-      "lat": 10.7798,
-      "lng": 106.699
-    },
-    {
-      "id": 1,
-      "name": "Ben Thanh Market",
-      "lat": 10.7725,
-      "lng": 106.698
-    }
-  ],
-  "costMatrix": [[0, 6], [6, 0]]
-}
-```
-
-## POST `/api/solve/greedy`
-
-Runs the Greedy nearest-neighbor strategy.
+Runs the Dijkstra shortest-path strategy.
 
 ### Request
 
 ```json
 {
-  "start": 0,
-  "costMatrix": [
-    [0, 10, 15],
-    [10, 0, 20],
-    [15, 20, 0]
+  "source": 1,
+  "target": 6,
+  "directed": false,
+  "nodes": [
+    { "id": 1, "name": "Ben Thanh Market", "lat": 10.7725, "lng": 106.698 },
+    { "id": 6, "name": "Saigon Zoo", "lat": 10.7866, "lng": 106.7057 }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "from": 1,
+      "to": 2,
+      "weight": 2.5,
+      "geometry": [
+        { "lat": 10.7725, "lng": 106.698 },
+        { "lat": 10.7738, "lng": 106.6967 },
+        { "lat": 10.777, "lng": 106.6953 }
+      ]
+    }
   ]
 }
 ```
 
 ### Response
 
+Backend solver implementation is pending in the migration commit, so valid requests currently return:
+
 ```json
 {
-  "route": [0, 1, 2, 0],
-  "totalCost": 45,
-  "runtimeMs": 0.12
+  "error": "Shortest-path solver is not implemented yet.",
+  "algorithm": "dijkstra"
 }
 ```
 
-## POST `/api/solve/branch-and-bound`
+Final solver response will be:
 
-Runs the Branch and Bound optimal TSP strategy.
+```json
+{
+  "path": [1, 2, 3, 6],
+  "totalCost": 7.5,
+  "runtimeMs": 0.18,
+  "visitedOrder": [1, 2, 5, 3, 6],
+  "relaxedEdges": [
+    { "from": 1, "to": 2, "cumulativeCost": 2.5 }
+  ],
+  "traceSteps": [
+    {
+      "stepIndex": 0,
+      "phase": "select-current",
+      "currentNode": 1,
+      "queue": [],
+      "nodes": [
+        { "node": 1, "status": "current", "distance": 0 }
+      ],
+      "message": "Chọn node 1 vì có dist nhỏ nhất."
+    }
+  ]
+}
+```
 
-### Request
+## POST `/api/solve/a-star`
 
-Same shape as `POST /api/solve/greedy`.
+Runs the A* shortest-path strategy using a coordinate heuristic.
 
-### Response
-
-Same shape as `POST /api/solve/greedy`, but `route` and `totalCost` represent
-the optimal route found by Branch and Bound.
+Request and final response shape match `POST /api/solve/dijkstra`.
 
 ## Validation Direction
 
-- `start` must be an integer index inside the matrix range.
-- `costMatrix` must be a non-empty square numeric matrix.
-- Demo scope should stay around 5-10 locations.
+- `source` and `target` must be integer node ids that exist in `nodes`.
+- `source` and `target` should be different for the demo.
+- `nodes` must include unique ids, names, lat, and lng.
+- `edges` must reference existing nodes and use finite non-negative weights.
+- `geometry` is optional; when present it must contain at least two finite lat/lng points.
+- `traceSteps` is optional but recommended for algorithm replay UI.
 - Dataset ids use lowercase letters, numbers, and hyphens.
-- Dataset `locations.length` must match `costMatrix.length`.

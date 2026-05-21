@@ -7,7 +7,7 @@
   <circle cx="182" cy="128" r="18" fill="#00796B" stroke="white" stroke-width="10"/>
   <circle cx="100" cy="170" r="18" fill="#00796B" stroke="#F59E0B" stroke-width="10"/>
   <text x="272" y="118" fill="#0F172A" font-family="Avenir Next, Avenir, Helvetica, Arial, sans-serif" font-size="58" font-weight="800">RouteLab Group 1</text>
-  <text x="276" y="166" fill="#475569" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="600">Greedy vs Branch and Bound route optimizer</text>
+  <text x="276" y="166" fill="#475569" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="600">Dijkstra vs A* shortest-path visualizer</text>
   <path d="M276 196H516" stroke="#00796B" stroke-width="8" stroke-linecap="round"/>
   <path d="M532 196H610" stroke="#F59E0B" stroke-width="8" stroke-linecap="round"/>
   <path d="M626 196H704" stroke="#38BDF8" stroke-width="8" stroke-linecap="round"/>

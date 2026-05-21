@@ -1,8 +1,7 @@
 # Routes TODO
 
-- Define Express routes under `/api/solve`.
+- Keep dataset routes under `/api/datasets`.
+- Keep shortest-path solver routes under `/api/solve`.
 - Planned endpoints:
-  - `POST /api/solve/greedy`
-  - `POST /api/solve/branch-and-bound`
-  - `GET /api/datasets`
-  - `GET /api/datasets/:id`
+  - `POST /api/solve/dijkstra`
+  - `POST /api/solve/a-star`

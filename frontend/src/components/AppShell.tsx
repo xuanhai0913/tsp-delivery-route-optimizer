@@ -48,7 +48,7 @@ export function AppShell({
           <img className="brand-mark" src="/brand/logo-mark.svg" alt="" aria-hidden="true" />
           <div>
             <p className="brand-title">RouteLab Group 1</p>
-            <p className="brand-subtitle">Tối ưu hóa Vận tải</p>
+            <p className="brand-subtitle">Shortest Path Lab</p>
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export function AppShell({
 
         <button className="primary-wide-button" type="button" onClick={() => onNavigate("dashboard")}>
           <Route size={18} />
-          Chạy Algorithm
+          Chạy thuật toán
         </button>
 
         <div className="side-footer">

@@ -1,44 +1,66 @@
-# Algorithms Notes
+# Algorithm Notes
 
-## Greedy Nearest-Neighbor
+## Dijkstra
 
-- Start at the selected location.
-- At each step, choose the nearest unvisited location.
-- Return to the start after every location has been visited once.
-- Fast and simple, but does not guarantee the optimal route.
-- Expected classroom complexity note: usually `O(n^2)`.
-
-### Pseudocode
+- Solves single-source shortest path on graphs with non-negative edge weights.
+- Maintains a distance table and predecessor map.
+- Repeatedly selects the unvisited node with the smallest tentative distance.
+- Relaxes outgoing edges to improve known distances.
 
 ```text
-route = [start]
-visited = {start}
-current = start
+dist[source] = 0
+push source into priority queue
 
-while visited.size < n:
-  next = unvisited location with minimum costMatrix[current][location]
-  add next to route and visited
-  current = next
+while queue is not empty:
+  current = node with smallest dist
+  if current == target: stop
+  for each neighbor:
+    candidate = dist[current] + weight(current, neighbor)
+    if candidate < dist[neighbor]:
+      dist[neighbor] = candidate
+      previous[neighbor] = current
+      push/update neighbor
 
-add start to route
-return route and total route cost
+reconstruct path from previous map
 ```
 
-### Complexity
+- With a binary heap priority queue: `O((V + E) log V)`.
+- Guarantees the shortest path if all edge weights are non-negative.
 
-- Time complexity: `O(n^2)` because each of the `n` route positions scans up to `n` candidate locations.
-- Space complexity: `O(n)` for the visited set and returned route.
-- Tie-break rule in this project: if two unvisited locations have the same cost, the smaller index is selected first. This keeps tests and demos deterministic.
+## A*
 
-### Notes For Demo
+- Extends Dijkstra with a heuristic estimate to the target.
+- Uses `f(n) = g(n) + h(n)`.
+- `g(n)` is the known cost from source to `n`.
+- `h(n)` estimates remaining cost from `n` to target.
+- In this project, `h(n)` should use coordinate distance for map-like data.
 
-- Greedy is useful as a fast baseline and easy to explain in the presentation.
-- Greedy can make a locally good choice that creates an expensive edge later, so it is not guaranteed to match the optimal Branch and Bound route.
+```text
+g[source] = 0
+f[source] = h(source)
+push source into priority queue
 
-## Branch and Bound
+while queue is not empty:
+  current = node with smallest f
+  if current == target: stop
+  for each neighbor:
+    candidateG = g[current] + weight(current, neighbor)
+    if candidateG < g[neighbor]:
+      previous[neighbor] = current
+      g[neighbor] = candidateG
+      f[neighbor] = candidateG + h(neighbor)
 
-- Explore possible TSP routes as a search tree.
-- Track current route, current cost, visited locations, and best known route.
-- Cut branches that cannot beat the current best route.
-- Finds the optimal route for small inputs, but becomes slow as `n` grows.
-- Demo should use around 5-10 locations.
+reconstruct path from previous map
+```
+
+- Worst-case complexity can match Dijkstra, but a good heuristic usually reduces explored nodes.
+- A* remains optimal when the heuristic is admissible and consistent.
+
+## Demo Comparison
+
+| Criteria | Dijkstra | A* |
+| --- | --- | --- |
+| Goal | Baseline shortest path | Guided shortest path |
+| Extra information | None | Heuristic distance to target |
+| Guarantee | Optimal for non-negative weights | Optimal when heuristic is admissible |
+| Visualization | Expanding visited frontier | Directed search toward target |

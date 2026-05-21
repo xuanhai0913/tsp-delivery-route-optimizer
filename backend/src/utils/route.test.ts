@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { calculateRouteCost, isCompleteTour } from "./route.js";
 
-describe("route utilities", () => {
-  const costMatrix = [
-    [0, 10, 15],
-    [10, 0, 20],
-    [15, 20, 0]
-  ];
+import { calculatePathCost } from "./route.js";
 
-  it("calculates route cost including return to start", () => {
-    expect(calculateRouteCost([0, 1, 2, 0], costMatrix)).toBe(45);
+const edges = [
+  { id: "0-1", from: 0, to: 1, weight: 4 },
+  { id: "1-2", from: 1, to: 2, weight: 5 }
+];
+
+describe("path utilities", () => {
+  it("calculates path cost from graph edges", () => {
+    expect(calculatePathCost([0, 1, 2], edges)).toBe(9);
   });
 
-  it("accepts a complete TSP tour", () => {
-    expect(isCompleteTour([0, 2, 1, 0], 3, 0)).toBe(true);
+  it("supports reverse travel when the graph is undirected", () => {
+    expect(calculatePathCost([2, 1, 0], edges, false)).toBe(9);
   });
 
-  it("rejects routes that skip a location", () => {
-    expect(isCompleteTour([0, 2, 0], 3, 0)).toBe(false);
+  it("returns infinity for a missing directed edge", () => {
+    expect(calculatePathCost([2, 1, 0], edges, true)).toBe(Number.POSITIVE_INFINITY);
   });
 });

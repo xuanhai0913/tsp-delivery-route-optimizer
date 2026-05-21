@@ -1,10 +1,12 @@
-import type { Dataset, SolverState } from "../types/tsp";
+import type { Dataset, SolverState } from "../types/path";
 
-export function downloadJson(dataset: Dataset, start: number, results: SolverState): void {
+export function downloadJson(dataset: Dataset, source: number, target: number, results: SolverState): void {
   const payload = {
     exportedAt: new Date().toISOString(),
+    problem: "shortest-path",
     dataset,
-    start,
+    source,
+    target,
     results,
   };
 
@@ -14,7 +16,7 @@ export function downloadJson(dataset: Dataset, start: number, results: SolverSta
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `tsp-results-${dataset.id}.json`;
+  anchor.download = `shortest-path-results-${dataset.id}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }

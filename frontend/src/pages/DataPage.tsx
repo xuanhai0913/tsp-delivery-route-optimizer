@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { ValidationMessage } from "../components/ValidationMessage";
-import type { Dataset } from "../types/tsp";
+import type { Dataset } from "../types/path";
 import { validateDataset } from "../utils/validation";
 
 type DataPageProps = {
@@ -11,89 +11,95 @@ type DataPageProps = {
 
 export function DataPage({ dataset, onApplyDataset }: DataPageProps) {
   const [draft, setDraft] = useState<Dataset>(dataset);
-  const issues = useMemo(() => validateDataset(draft, 0), [draft]);
+  const [draftSource, setDraftSource] = useState(dataset.defaultSource);
+  const [draftTarget, setDraftTarget] = useState(dataset.defaultTarget);
+  const issues = useMemo(() => validateDataset(draft, draftSource, draftTarget), [draft, draftSource, draftTarget]);
 
-  const updateLocation = (index: number, field: "name" | "lat" | "lng", value: string) => {
+  const updateNode = (index: number, field: "name" | "lat" | "lng", value: string) => {
     setDraft((current) => ({
       ...current,
-      locations: current.locations.map((location, locationIndex) =>
-        locationIndex === index
+      nodes: current.nodes.map((node, nodeIndex) =>
+        nodeIndex === index
           ? {
-              ...location,
+              ...node,
               [field]: field === "name" ? value : Number(value),
             }
-          : location
+          : node
       ),
     }));
   };
 
-  const updateMatrixCell = (rowIndex: number, columnIndex: number, value: string) => {
+  const updateEdge = (index: number, field: "from" | "to" | "weight" | "label", value: string) => {
     setDraft((current) => ({
       ...current,
-      costMatrix: current.costMatrix.map((row, currentRowIndex) =>
-        currentRowIndex === rowIndex
-          ? row.map((cell, currentColumnIndex) =>
-              currentColumnIndex === columnIndex ? Number(value) : cell
-            )
-          : row
+      edges: current.edges.map((edge, edgeIndex) =>
+        edgeIndex === index
+          ? {
+              ...edge,
+              [field]: field === "label" ? value : Number(value),
+            }
+          : edge
       ),
     }));
   };
 
-  const addLocation = () => {
+  const addNode = () => {
     setDraft((current) => {
-      const nextId = current.locations.length;
-      const nextLocations = [
-        ...current.locations,
-        {
-          id: nextId,
-          name: `Điểm mới ${nextId}`,
-          lat: current.locations[0]?.lat ?? 10.7769,
-          lng: current.locations[0]?.lng ?? 106.7009,
-        },
-      ];
-      const nextMatrix = current.costMatrix.map((row) => [...row, 5]);
-      nextMatrix.push(Array.from({ length: nextLocations.length }, (_, index) => (index === nextId ? 0 : 5)));
-
+      const nextId = Math.max(...current.nodes.map((node) => node.id)) + 1;
       return {
         ...current,
-        locations: nextLocations,
-        costMatrix: nextMatrix,
+        nodes: [
+          ...current.nodes,
+          {
+            id: nextId,
+            name: `Node mới ${nextId}`,
+            lat: current.nodes[0]?.lat ?? 10.7769,
+            lng: current.nodes[0]?.lng ?? 106.7009,
+          },
+        ],
       };
     });
   };
 
-  const removeLocation = (index: number) => {
+  const removeNode = (index: number) => {
     setDraft((current) => {
-      if (current.locations.length <= 3) {
+      if (current.nodes.length <= 4) {
         return current;
       }
 
-      const locations = current.locations
-        .filter((_, locationIndex) => locationIndex !== index)
-        .map((location, nextIndex) => ({ ...location, id: nextIndex }));
-      const costMatrix = current.costMatrix
-        .filter((_, rowIndex) => rowIndex !== index)
-        .map((row) => row.filter((_, columnIndex) => columnIndex !== index));
-
-      return { ...current, locations, costMatrix };
+      const removedId = current.nodes[index].id;
+      return {
+        ...current,
+        nodes: current.nodes.filter((_, nodeIndex) => nodeIndex !== index),
+        edges: current.edges.filter((edge) => edge.from !== removedId && edge.to !== removedId),
+      };
     });
   };
 
-  const generateSampleMatrix = () => {
+  const addEdge = () => {
     setDraft((current) => {
-      const size = current.locations.length;
-      const costMatrix = Array.from({ length: size }, (_, rowIndex) =>
-        Array.from({ length: size }, (_, columnIndex) => {
-          if (rowIndex === columnIndex) {
-            return 0;
-          }
+      const from = current.nodes[0]?.id ?? 0;
+      const to = current.nodes[1]?.id ?? from;
+      const id = `e${from}-${to}-${current.edges.length + 1}`;
+      return {
+        ...current,
+        edges: [...current.edges, { id, from, to, weight: 3, label: "New edge" }],
+      };
+    });
+  };
 
-          return Number((3 + Math.abs(rowIndex - columnIndex) * 1.7 + ((rowIndex + columnIndex) % 3)).toFixed(1));
-        })
-      );
+  const removeEdge = (index: number) => {
+    setDraft((current) => ({
+      ...current,
+      edges: current.edges.filter((_, edgeIndex) => edgeIndex !== index),
+    }));
+  };
 
-      return { ...current, costMatrix };
+  const applyDraft = () => {
+    onApplyDataset({
+      ...draft,
+      defaultSource: draftSource,
+      defaultTarget: draftTarget,
     });
   };
 
@@ -101,29 +107,52 @@ export function DataPage({ dataset, onApplyDataset }: DataPageProps) {
     <div className="page-stack page-enter">
       <div className="page-header-row">
         <div>
-          <h1>Nhập dữ liệu TSP</h1>
-          <p>Chỉnh sửa danh sách điểm đến và cập nhật ma trận chi phí tương ứng.</p>
+          <h1>Nhập dữ liệu graph</h1>
+          <p>Chỉnh sửa nodes, weighted edges, nguồn và đích cho bài toán shortest path.</p>
         </div>
         <div className="header-actions">
           <button className="secondary-button" type="button" onClick={() => setDraft(dataset)}>
             Khôi phục
           </button>
-          <button className="solid-button" type="button" onClick={() => onApplyDataset(draft)}>
+          <button className="solid-button" type="button" onClick={applyDraft}>
             <Save size={17} />
-            Dùng dữ liệu này để chạy thuật toán
+            Dùng graph này
           </button>
         </div>
       </div>
 
       <ValidationMessage issues={issues} />
 
+      <div className="panel source-target-panel">
+        <label className="field-label" htmlFor="draft-source">
+          Nguồn mặc định
+        </label>
+        <select id="draft-source" value={draftSource} onChange={(event) => setDraftSource(Number(event.target.value))}>
+          {draft.nodes.map((node) => (
+            <option key={node.id} value={node.id}>
+              {node.id} - {node.name}
+            </option>
+          ))}
+        </select>
+        <label className="field-label" htmlFor="draft-target">
+          Đích mặc định
+        </label>
+        <select id="draft-target" value={draftTarget} onChange={(event) => setDraftTarget(Number(event.target.value))}>
+          {draft.nodes.map((node) => (
+            <option key={node.id} value={node.id}>
+              {node.id} - {node.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="data-editor-grid">
         <section className="panel editor-panel">
           <div className="panel-heading">
-            <h2>Danh sách Điểm đến</h2>
-            <button className="secondary-button compact-button" type="button" onClick={addLocation}>
+            <h2>Nodes</h2>
+            <button className="secondary-button compact-button" type="button" onClick={addNode}>
               <Plus size={17} />
-              Thêm điểm
+              Thêm node
             </button>
           </div>
 
@@ -132,40 +161,37 @@ export function DataPage({ dataset, onApplyDataset }: DataPageProps) {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Tên địa điểm</th>
+                  <th>Tên node</th>
                   <th>Vĩ độ</th>
                   <th>Kinh độ</th>
                   <th aria-label="Xóa" />
                 </tr>
               </thead>
               <tbody>
-                {draft.locations.map((location, index) => (
-                  <tr key={location.id}>
-                    <td>{location.id}</td>
+                {draft.nodes.map((node, index) => (
+                  <tr key={node.id}>
+                    <td>{node.id}</td>
+                    <td>
+                      <input value={node.name} onChange={(event) => updateNode(index, "name", event.target.value)} />
+                    </td>
                     <td>
                       <input
-                        value={location.name}
-                        onChange={(event) => updateLocation(index, "name", event.target.value)}
+                        type="number"
+                        value={node.lat}
+                        step="0.0001"
+                        onChange={(event) => updateNode(index, "lat", event.target.value)}
                       />
                     </td>
                     <td>
                       <input
                         type="number"
-                        value={location.lat}
+                        value={node.lng}
                         step="0.0001"
-                        onChange={(event) => updateLocation(index, "lat", event.target.value)}
+                        onChange={(event) => updateNode(index, "lng", event.target.value)}
                       />
                     </td>
                     <td>
-                      <input
-                        type="number"
-                        value={location.lng}
-                        step="0.0001"
-                        onChange={(event) => updateLocation(index, "lng", event.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <button className="icon-button subtle" type="button" onClick={() => removeLocation(index)}>
+                      <button className="icon-button subtle" type="button" onClick={() => removeNode(index)}>
                         <Trash2 size={17} />
                       </button>
                     </td>
@@ -178,37 +204,53 @@ export function DataPage({ dataset, onApplyDataset }: DataPageProps) {
 
         <section className="panel editor-panel">
           <div className="panel-heading">
-            <h2>Ma trận Chi phí</h2>
-            <button className="secondary-button compact-button" type="button" onClick={generateSampleMatrix}>
-              Tạo ma trận mẫu
+            <h2>Weighted edges</h2>
+            <button className="secondary-button compact-button" type="button" onClick={addEdge}>
+              <Plus size={17} />
+              Thêm cạnh
             </button>
           </div>
 
-          <div className="editable-matrix">
-            <table className="matrix-editor-table">
+          <div className="editor-table-wrap">
+            <table className="editor-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  {draft.costMatrix.map((_, index) => (
-                    <th key={index}>{index}</th>
-                  ))}
+                  <th>ID</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Weight</th>
+                  <th>Geometry</th>
+                  <th>Label</th>
+                  <th aria-label="Xóa" />
                 </tr>
               </thead>
               <tbody>
-                {draft.costMatrix.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    <th>{rowIndex}</th>
-                    {row.map((value, columnIndex) => (
-                      <td key={`${rowIndex}-${columnIndex}`}>
-                        <input
-                          className={rowIndex === columnIndex ? "diagonal-input" : ""}
-                          type="number"
-                          value={value}
-                          step="0.1"
-                          onChange={(event) => updateMatrixCell(rowIndex, columnIndex, event.target.value)}
-                        />
-                      </td>
-                    ))}
+                {draft.edges.map((edge, index) => (
+                  <tr key={`${edge.id}-${index}`}>
+                    <td>{edge.id}</td>
+                    <td>
+                      <input type="number" value={edge.from} onChange={(event) => updateEdge(index, "from", event.target.value)} />
+                    </td>
+                    <td>
+                      <input type="number" value={edge.to} onChange={(event) => updateEdge(index, "to", event.target.value)} />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={edge.weight}
+                        step="0.1"
+                        onChange={(event) => updateEdge(index, "weight", event.target.value)}
+                      />
+                    </td>
+                    <td>{edge.geometry?.length ?? 2} pts</td>
+                    <td>
+                      <input value={edge.label ?? ""} onChange={(event) => updateEdge(index, "label", event.target.value)} />
+                    </td>
+                    <td>
+                      <button className="icon-button subtle" type="button" onClick={() => removeEdge(index)}>
+                        <Trash2 size={17} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -216,7 +258,7 @@ export function DataPage({ dataset, onApplyDataset }: DataPageProps) {
           </div>
 
           <p className="muted-note">
-            Gợi ý: cột và hàng tương ứng với ID điểm đến. Giá trị đường chéo mặc định bằng 0.
+            Graph demo đang là vô hướng. Geometry là optional; nếu không có, bản đồ sẽ fallback về line thẳng giữa hai node.
           </p>
         </section>
       </div>

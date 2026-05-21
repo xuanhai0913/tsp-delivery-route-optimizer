@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { mockDatasets } from "../data/mockDatasets";
-import type { SolverState } from "../types/tsp";
+import type { SolverState } from "../types/path";
 import { useRoutePlayback } from "./useRoutePlayback";
 
 function PlaybackHarness({ results }: { results: SolverState }) {
@@ -18,22 +18,22 @@ function PlaybackHarness({ results }: { results: SolverState }) {
       <button type="button" onClick={playback.stepNext}>
         next
       </button>
-      <button type="button" onClick={() => playback.setSelectedAlgorithm("greedy")}>
-        greedy
+      <button type="button" onClick={() => playback.setSelectedAlgorithm("dijkstra")}>
+        dijkstra
       </button>
     </div>
   );
 }
 
 describe("useRoutePlayback", () => {
-  it("prefers branch-and-bound results and resets when results clear", async () => {
+  it("prefers A* results and resets when results clear", async () => {
     const results: SolverState = {
-      greedy: { route: [0, 1, 0], totalCost: 10, runtimeMs: 2 },
-      branchAndBound: { route: [0, 2, 1, 0], totalCost: 8, runtimeMs: 40 },
+      dijkstra: { path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 8 },
+      aStar: { path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 5 },
     };
     const { rerender } = render(<PlaybackHarness results={results} />);
 
-    expect(screen.getByTestId("algorithm")).toHaveTextContent("branchAndBound");
+    expect(screen.getByTestId("algorithm")).toHaveTextContent("aStar");
     expect(screen.getByTestId("segments")).toHaveTextContent("3");
 
     fireEvent.click(screen.getByText("next"));
@@ -51,13 +51,13 @@ describe("useRoutePlayback", () => {
     render(
       <PlaybackHarness
         results={{
-          greedy: { route: [0, 1, 0], totalCost: 10, runtimeMs: 2 },
-          branchAndBound: { route: [0, 2, 1, 0], totalCost: 8, runtimeMs: 40 },
+          dijkstra: { path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 8 },
+          aStar: { path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 5 },
         }}
       />
     );
 
-    fireEvent.click(screen.getByText("greedy"));
-    expect(screen.getByTestId("algorithm")).toHaveTextContent("greedy");
+    fireEvent.click(screen.getByText("dijkstra"));
+    expect(screen.getByTestId("algorithm")).toHaveTextContent("dijkstra");
   });
 });

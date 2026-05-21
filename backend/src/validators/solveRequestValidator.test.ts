@@ -1,38 +1,53 @@
 import { describe, expect, it } from "vitest";
+
 import { validateSolveRequest } from "./solveRequestValidator.js";
 
+const nodes = [
+  { id: 0, name: "A", lat: 10, lng: 106 },
+  { id: 1, name: "B", lat: 10.1, lng: 106.1 },
+  { id: 2, name: "C", lat: 10.2, lng: 106.2 }
+];
+
+const edges = [
+  { id: "0-1", from: 0, to: 1, weight: 4 },
+  { id: "1-2", from: 1, to: 2, weight: 5 }
+];
+
 describe("validateSolveRequest", () => {
-  it("accepts a valid square matrix and start index", () => {
+  it("accepts a valid graph, source, and target", () => {
     const issues = validateSolveRequest({
-      start: 0,
-      costMatrix: [
-        [0, 4],
-        [4, 0]
-      ]
+      source: 0,
+      target: 2,
+      nodes,
+      edges,
+      directed: false
     });
 
     expect(issues).toHaveLength(0);
   });
 
-  it("rejects non-square matrices", () => {
+  it("rejects missing graph collections", () => {
     const issues = validateSolveRequest({
-      start: 0,
-      costMatrix: [[0, 4], [4]]
+      source: 0,
+      target: 1,
+      nodes: [],
+      edges: []
     });
 
-    expect(issues.some((issue) => issue.code === "matrix-not-square")).toBe(true);
+    expect(issues.some((issue) => issue.code === "nodes-empty")).toBe(true);
+    expect(issues.some((issue) => issue.code === "edges-empty")).toBe(true);
   });
 
-  it("rejects invalid start indexes and negative costs", () => {
+  it("rejects invalid source/target and edge references", () => {
     const issues = validateSolveRequest({
-      start: 3,
-      costMatrix: [
-        [0, -4],
-        [4, 0]
-      ]
+      source: 9,
+      target: 9,
+      nodes,
+      edges: [{ id: "bad", from: 0, to: 99, weight: -1 }]
     });
 
-    expect(issues.some((issue) => issue.code === "start-out-of-range")).toBe(true);
-    expect(issues.some((issue) => issue.code === "matrix-negative")).toBe(true);
+    expect(issues.some((issue) => issue.code === "source-not-found")).toBe(true);
+    expect(issues.some((issue) => issue.code === "target-not-found")).toBe(true);
+    expect(issues.some((issue) => issue.code === "edge-invalid")).toBe(true);
   });
 });

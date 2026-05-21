@@ -1,38 +1,44 @@
 import { describe, expect, it } from "vitest";
+import { mockDatasets } from "../data/mockDatasets";
 import { validateSolveRequest } from "./validation";
 
 describe("validateSolveRequest", () => {
-  it("accepts a square numeric matrix with a valid start index", () => {
+  it("accepts a graph with valid source and target", () => {
+    const dataset = mockDatasets[0];
     expect(
       validateSolveRequest({
-        start: 0,
-        costMatrix: [
-          [0, 1],
-          [1, 0],
-        ],
+        source: dataset.defaultSource,
+        target: dataset.defaultTarget,
+        nodes: dataset.nodes,
+        edges: dataset.edges,
+        directed: dataset.directed,
       })
     ).toHaveLength(0);
   });
 
-  it("reports non-square matrices", () => {
+  it("reports missing graph collections", () => {
     const issues = validateSolveRequest({
-      start: 0,
-      costMatrix: [[0, 1], [1]],
+      source: 0,
+      target: 1,
+      nodes: [],
+      edges: [],
     });
 
-    expect(issues.some((issue) => issue.code === "matrix-not-square")).toBe(true);
+    expect(issues.some((issue) => issue.code === "nodes-empty")).toBe(true);
+    expect(issues.some((issue) => issue.code === "edges-empty")).toBe(true);
   });
 
-  it("reports negative costs and invalid start indexes", () => {
+  it("reports invalid source/target and bad edge refs", () => {
+    const dataset = mockDatasets[0];
     const issues = validateSolveRequest({
-      start: 3,
-      costMatrix: [
-        [0, -1],
-        [1, 0],
-      ],
+      source: 99,
+      target: 99,
+      nodes: dataset.nodes,
+      edges: [{ id: "bad", from: 0, to: 99, weight: 1 }],
     });
 
-    expect(issues.some((issue) => issue.code === "start-out-of-range")).toBe(true);
-    expect(issues.some((issue) => issue.code === "matrix-negative")).toBe(true);
+    expect(issues.some((issue) => issue.code === "source-invalid")).toBe(true);
+    expect(issues.some((issue) => issue.code === "target-invalid")).toBe(true);
+    expect(issues.some((issue) => issue.code === "edge-node-missing")).toBe(true);
   });
 });

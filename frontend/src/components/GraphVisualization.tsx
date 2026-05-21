@@ -1,4 +1,4 @@
-import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot, SolverState } from "../types/tsp";
+import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot, SolverState } from "../types/path";
 
 type GraphVisualizationProps = {
   dataset: Dataset;
@@ -17,26 +17,32 @@ const graphPositions = [
   { x: 38, y: 92 },
 ];
 
-function routeSegments(route: number[]) {
-  return route.slice(0, -1).map((from, index) => ({
+function pathSegments(path: number[]) {
+  return path.slice(0, -1).map((from, index) => ({
     from,
-    to: route[index + 1],
+    to: path[index + 1],
     stepIndex: index,
   }));
 }
 
 export function GraphVisualization({ dataset, results, visibleRoutes, playback }: GraphVisualizationProps) {
   const routes = [
-    { key: "greedy" as const, result: results.greedy, visible: visibleRoutes.greedy },
-    {
-      key: "branchAndBound" as const,
-      result: results.branchAndBound,
-      visible: visibleRoutes.branchAndBound,
-    },
+    { key: "dijkstra" as const, result: results.dijkstra, visible: visibleRoutes.dijkstra },
+    { key: "aStar" as const, result: results.aStar, visible: visibleRoutes.aStar },
   ];
+  const currentTraceStep = playback?.currentTraceStep;
+  const completedRelaxedKeys = new Set(
+    playback?.completedTraceSteps
+      .flatMap((step) => (step.relaxedEdge ? [`${step.relaxedEdge.from}-${step.relaxedEdge.to}`] : [])) ?? []
+  );
+  const currentRelaxedKey = currentTraceStep?.relaxedEdge
+    ? `${currentTraceStep.relaxedEdge.from}-${currentTraceStep.relaxedEdge.to}`
+    : undefined;
+  const statusByNode = new Map(currentTraceStep?.nodes.map((node) => [node.node, node.status]) ?? []);
+  const showFinalPath = !playback?.isTraceMode || playback.isComplete || currentTraceStep?.phase === "final-path";
 
   return (
-    <div className="graph-canvas" role="img" aria-label="Graph trực quan lộ trình">
+    <div className="graph-canvas" role="img" aria-label="Graph trực quan shortest path">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
@@ -45,19 +51,46 @@ export function GraphVisualization({ dataset, results, visibleRoutes, playback }
         </defs>
         <rect width="100" height="100" fill="url(#grid)" />
 
+        {dataset.edges.map((edge) => {
+          const start = graphPositions[edge.from] ?? graphPositions[0];
+          const end = graphPositions[edge.to] ?? graphPositions[0];
+          const forwardKey = `${edge.from}-${edge.to}`;
+          const reverseKey = `${edge.to}-${edge.from}`;
+          const isCurrent = currentRelaxedKey === forwardKey || currentRelaxedKey === reverseKey;
+          const isRelaxed = completedRelaxedKeys.has(forwardKey) || completedRelaxedKeys.has(reverseKey);
+          return (
+            <line
+              key={edge.id}
+              className={[
+                "graph-base-edge",
+                isRelaxed ? "relaxed" : "",
+                isCurrent ? `current ${playback?.algorithm ?? ""}` : "",
+              ].join(" ")}
+              x1={start.x}
+              y1={start.y}
+              x2={end.x}
+              y2={end.y}
+            />
+          );
+        })}
+
         {routes.map(({ key, result, visible }) =>
           result && visible
-            ? routeSegments(result.route).map(({ from, to, stepIndex }) => {
-                const start = graphPositions[from];
-                const end = graphPositions[to];
+            ? pathSegments(result.path).map(({ from, to, stepIndex }) => {
+                const start = graphPositions[from] ?? graphPositions[0];
+                const end = graphPositions[to] ?? graphPositions[0];
                 const isPlaybackRoute = playback?.algorithm === key;
                 const hasPlaybackRoute = Boolean(playback?.algorithm);
                 const playbackClass = isPlaybackRoute
-                  ? stepIndex < playback.completedStepCount
-                    ? "completed"
-                    : stepIndex === playback.activeStep && !playback.isComplete
-                      ? "current"
+                  ? playback?.isTraceMode
+                    ? showFinalPath
+                      ? "completed"
                       : "pending"
+                    : stepIndex < playback.completedStepCount
+                      ? "completed"
+                      : stepIndex === playback.activeStep && !playback.isComplete
+                        ? "current"
+                        : "pending"
                   : hasPlaybackRoute
                     ? "context"
                     : "completed";
@@ -78,25 +111,31 @@ export function GraphVisualization({ dataset, results, visibleRoutes, playback }
             : null
         )}
 
-        {dataset.locations.map((location, index) => {
+        {dataset.nodes.map((node, index) => {
           const position = graphPositions[index] ?? graphPositions[0];
-          const activeRoute = playback?.algorithm ? results[playback.algorithm]?.route ?? [] : [];
-          const visitIndex = activeRoute.slice(0, -1).findIndex((id) => id === location.id);
-          const isVisited = visitIndex >= 0 && visitIndex <= (playback?.completedStepCount ?? -1);
-          const isCurrent = playback?.currentSegment?.to === location.id && !playback.isComplete;
+          const activePath = playback?.algorithm ? results[playback.algorithm]?.path ?? [] : [];
+          const visitIndex = activePath.findIndex((id) => id === node.id);
+          const traceStatus = statusByNode.get(node.id);
+          const isVisited =
+            traceStatus === "visited" ||
+            traceStatus === "path" ||
+            (!playback?.isTraceMode && visitIndex >= 0 && visitIndex <= (playback?.completedStepCount ?? -1));
+          const isCurrent = traceStatus === "current" || (playback?.currentSegment?.to === node.id && !playback.isComplete);
 
           return (
             <g
-              key={location.id}
+              key={node.id}
               className={[
                 "graph-node",
                 isVisited ? "visited" : "",
                 isCurrent ? "current" : "",
+                traceStatus === "queued" ? "queued" : "",
+                traceStatus === "path" ? "path" : "",
               ].join(" ")}
             >
               <circle cx={position.x} cy={position.y} r="3.8" />
               <text x={position.x} y={position.y + 1.3} textAnchor="middle">
-                {location.id}
+                {node.id}
               </text>
               {visitIndex >= 0 ? (
                 <text className="graph-order" x={position.x + 4.7} y={position.y - 4.8}>
@@ -108,8 +147,8 @@ export function GraphVisualization({ dataset, results, visibleRoutes, playback }
         })}
       </svg>
       <div className="graph-legend" aria-hidden="true">
-        <span><i className="legend-line greedy" /> Greedy</span>
-        <span><i className="legend-line branch" /> Branch & Bound</span>
+        <span><i className="legend-line dijkstra" /> Dijkstra</span>
+        <span><i className="legend-line astar" /> A*</span>
       </div>
     </div>
   );

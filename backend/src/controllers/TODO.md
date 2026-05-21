@@ -1,5 +1,5 @@
 # Controllers TODO
 
-- Add route handlers for solving requests.
-- Keep HTTP details here and delegate algorithm work to services.
-- Return consistent success and error JSON responses.
+- Keep handlers small and delegate graph validation to validators.
+- Return `501` for shortest-path solvers until backend implementations are ready.
+- Use consistent JSON error responses for invalid graph requests.

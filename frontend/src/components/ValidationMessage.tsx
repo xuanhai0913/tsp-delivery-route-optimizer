@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
-import type { ValidationIssue } from "../types/tsp";
+import type { ValidationIssue } from "../types/path";
 
 type ValidationMessageProps = {
   issues: ValidationIssue[];

@@ -1,47 +1,41 @@
-import type { Location } from "../types/tsp";
+import type { AlgorithmKey, GraphNode } from "../types/path";
 
 type RouteChipListProps = {
-  route: number[];
-  locations: Location[];
-  tone: "greedy" | "branch";
+  path: number[];
+  nodes: GraphNode[];
+  algorithm: AlgorithmKey;
   activeStep?: number;
+  activeNodeId?: number;
   isPlaybackTarget?: boolean;
 };
 
-export function RouteChipList({
-  route,
-  locations,
-  tone,
-  activeStep,
-  isPlaybackTarget = false,
-}: RouteChipListProps) {
-  const locationNames = new Map(locations.map((location) => [location.id, location.name]));
-  const currentNodeIndex =
-    activeStep === undefined ? -1 : Math.min(activeStep + 1, route.length - 1);
+export function RouteChipList({ path, nodes, algorithm, activeStep, activeNodeId, isPlaybackTarget }: RouteChipListProps) {
+  const nodeById = new Map(nodes.map((node) => [node.id, node.name]));
+  const activeNodeIndex =
+    isPlaybackTarget && activeNodeId !== undefined
+      ? path.findIndex((id) => id === activeNodeId)
+      : isPlaybackTarget && activeStep !== undefined
+        ? activeStep + 1
+        : -1;
 
   return (
-    <div className="route-chip-list" aria-label="Lộ trình">
-      {route.map((id, index) => {
-        const isVisited = isPlaybackTarget && activeStep !== undefined && index <= activeStep;
-        const isCurrent = isPlaybackTarget && index === currentNodeIndex;
-
-        return (
-          <span className="route-chip-wrap" key={`${id}-${index}`}>
-            <span
-              className={[
-                "route-chip",
-                tone,
-                isVisited ? "visited" : "",
-                isCurrent ? "active" : "",
-              ].join(" ")}
-              title={locationNames.get(id)}
-            >
-              {id}
-            </span>
-            {index < route.length - 1 ? <span className="route-arrow">→</span> : null}
+    <div className="route-chip-list" aria-label="Đường đi ngắn nhất">
+      {path.map((nodeId, index) => (
+        <span className="route-chip-wrap" key={`${nodeId}-${index}`}>
+          <span
+            className={[
+              "route-chip",
+              algorithm === "dijkstra" ? "dijkstra" : "astar",
+              isPlaybackTarget && index < activeNodeIndex ? "visited" : "",
+              isPlaybackTarget && index === activeNodeIndex ? "active" : "",
+            ].join(" ")}
+            title={nodeById.get(nodeId) ?? `Node ${nodeId}`}
+          >
+            {nodeId}
           </span>
-        );
-      })}
+          {index < path.length - 1 ? <span className="route-arrow">→</span> : null}
+        </span>
+      ))}
     </div>
   );
 }

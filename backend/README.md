@@ -1,36 +1,36 @@
 # Backend
 
-Node.js + Express backend for solving the TSP delivery-route problem.
+Node.js + Express backend for a shortest-path classroom demo.
 
-This folder contains the backend TypeScript + Express API for algorithm work.
-The service is prepared for Render deployment as `routelab-backend`.
+The service is prepared for Render/Railway-style deployment as `routelab-backend`.
 
 ## Responsibilities
 
-- Read and validate cost matrix input.
-- Expose solving APIs under `/api/solve`.
-- Run Greedy nearest-neighbor and Branch and Bound algorithms.
-- Return route, total cost, and runtime in milliseconds.
+- Read and validate graph nodes and weighted edges.
+- Expose dataset APIs under `/api/datasets`.
+- Expose shortest-path solving APIs under `/api/solve`.
+- Return `501 Not Implemented` for solver endpoints until Dijkstra/A* are implemented.
 
 ## API
 
 ```text
 GET /health
 GET /health/db
-POST /api/solve/greedy
-POST /api/solve/branch-and-bound
+GET /api/datasets
+GET /api/datasets/:id
+POST /api/solve/dijkstra
+POST /api/solve/a-star
 ```
 
 Solve request:
 
 ```json
 {
-  "start": 0,
-  "costMatrix": [
-    [0, 10, 15],
-    [10, 0, 20],
-    [15, 20, 0]
-  ]
+  "source": 1,
+  "target": 6,
+  "directed": false,
+  "nodes": [{ "id": 1, "name": "Ben Thanh Market", "lat": 10.7725, "lng": 106.698 }],
+  "edges": [{ "id": "e1-2", "from": 1, "to": 2, "weight": 2.5 }]
 }
 ```
 
@@ -39,8 +39,8 @@ Solve request:
 ```text
 src/
   algorithms/
-    greedy/
-    branch-and-bound/
+    dijkstra/
+    a-star/
   controllers/
   routes/
   services/
@@ -52,8 +52,8 @@ src/
 
 ## Team Ownership
 
-- Member 1: `src/algorithms/greedy`, data handling, Greedy complexity notes.
-- Member 2: `src/algorithms/branch-and-bound`, optimal solver, pruning notes.
+- Member 1: graph data, request validation, Dijkstra implementation and complexity notes.
+- Member 2: A* implementation, coordinate heuristic, correctness notes.
 - Member 3: consume backend APIs from frontend.
 - Member 4: test cases and verification scenarios.
 
@@ -62,22 +62,29 @@ src/
 Shared backend contracts should follow these shapes:
 
 ```ts
-type SolveRequest = {
-  start: number;
-  costMatrix: number[][];
+type PathSolveRequest = {
+  source: number;
+  target: number;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  directed?: boolean;
 };
 
-type SolveResult = {
-  route: number[];
+type PathSolveResult = {
+  path: number[];
   totalCost: number;
   runtimeMs: number;
+  visitedOrder?: number[];
+  relaxedEdges?: Array<{ from: number; to: number; cumulativeCost: number }>;
+  traceSteps?: AlgorithmTraceStep[];
 };
 ```
 
-## Local Checks
+`GraphEdge.geometry` is optional and stores road-like polyline points for map
+visualization. `traceSteps` is optional but should be returned by the real
+Dijkstra/A* solver so the frontend can replay queue, relaxation, and node state.
 
-Run these commands before opening a PR that changes backend algorithms or shared
-data:
+## Local Checks
 
 ```bash
 cd backend
@@ -101,5 +108,5 @@ The API runs on `http://localhost:3000` by default.
 ## Deployment
 
 Render deployment is configured by `/render.yaml`.
-Railway PostgreSQL is provided through `DATABASE_URL` as a Render secret.
+Railway PostgreSQL is provided through `DATABASE_URL` as a deployment secret.
 Detailed setup notes are in `docs/backend-deploy-render.md`.

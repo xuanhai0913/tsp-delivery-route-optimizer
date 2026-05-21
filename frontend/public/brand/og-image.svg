@@ -10,7 +10,7 @@
   <path d="M286 160L318 130" stroke="#38BDF8" stroke-width="14" stroke-linecap="round"/>
   <circle cx="326" cy="122" r="12" fill="#38BDF8"/>
   <text x="410" y="228" fill="#0F172A" font-family="Avenir Next, Avenir, Helvetica, Arial, sans-serif" font-size="76" font-weight="800">RouteLab Group 1</text>
-  <text x="414" y="292" fill="#475569" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="30" font-weight="700">Greedy vs Branch and Bound route optimizer</text>
+  <text x="414" y="292" fill="#475569" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="30" font-weight="700">Dijkstra vs A* shortest-path visualizer</text>
   <text x="414" y="354" fill="#00796B" font-family="Avenir Next, Avenir, Helvetica, Arial, sans-serif" font-size="28" font-weight="700">maps.hailamdev.space</text>
   <path d="M414 414H654" stroke="#00796B" stroke-width="10" stroke-linecap="round"/>
   <path d="M676 414H774" stroke="#F59E0B" stroke-width="10" stroke-linecap="round"/>

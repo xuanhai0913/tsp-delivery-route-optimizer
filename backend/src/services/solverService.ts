@@ -1,13 +1,13 @@
-import { solveBranchAndBound } from "../algorithms/branch-and-bound/branchAndBound.js";
-import { solveGreedyNearestNeighbor } from "../algorithms/greedy/greedy.js";
-import type { SolveRequest, SolveResult } from "../types/tsp.js";
+import type { PathSolveRequest, PathSolveResult } from "../types/path.js";
 
-export type SolverAlgorithm = "greedy" | "branch-and-bound";
+export type SolverAlgorithm = "dijkstra" | "a-star";
 
-export function solveTsp(algorithm: SolverAlgorithm, request: SolveRequest): SolveResult {
-  if (algorithm === "greedy") {
-    return solveGreedyNearestNeighbor(request);
+export class SolverNotImplementedError extends Error {
+  constructor(public readonly algorithm: SolverAlgorithm) {
+    super(`${algorithm} solver is not implemented yet.`);
   }
+}
 
-  return solveBranchAndBound(request);
+export function solveShortestPath(algorithm: SolverAlgorithm, _request: PathSolveRequest): PathSolveResult {
+  throw new SolverNotImplementedError(algorithm);
 }
