@@ -18,6 +18,16 @@ function asIssueArray(value) {
     : [];
 }
 
+function isResolvedNonActionableIssue(issue) {
+  const text = `${issue.title} ${issue.detail} ${issue.recommendation}`.toLowerCase();
+  const saysUnresolved = /(chưa|không)\s+(được\s+)?(khắc phục|sửa|giải quyết)/i.test(text);
+  const saysResolved =
+    /(đã|da)\s+(được\s+)?(khắc phục|sửa|giải quyết)/i.test(text) ||
+    /thay đổi này đã/i.test(text);
+
+  return saysResolved && !saysUnresolved;
+}
+
 function extractJson(text) {
   const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
   const candidate = fenced?.[1] ?? text;
@@ -109,6 +119,8 @@ async function main() {
   const prompt = [
     "Bạn là senior backend reviewer nghiêm khắc cho dự án Node.js + Express + TypeScript mô phỏng shortest path bằng Dijkstra và A*.",
     "Hãy review git diff bên dưới và chỉ báo lỗi thật: sai thuật toán, crash runtime, lộ secret, dùng database sai, blocker deploy, vỡ API contract, hoặc thiếu test cho thay đổi rủi ro.",
+    "Chỉ đánh giá trạng thái code SAU KHI áp dụng diff. Không báo lại bug mà diff đang sửa hoặc đã khắc phục.",
+    "Critical và warnings chỉ được chứa việc còn phải sửa tiếp. Nếu title/detail/recommendation có ý 'đã khắc phục', 'đã sửa', 'đã giải quyết', hãy bỏ khỏi danh sách finding.",
     "Không báo lỗi về style, format, đặt tên, hoặc refactor vô hại.",
     "Chỉ phân loại critical nếu lỗi có thể làm hỏng production, lộ secret, mất/sai dữ liệu, fail deploy, hoặc tạo kết quả thuật toán sai rõ ràng.",
     "Toàn bộ nội dung trong summary, title, detail, recommendation phải viết bằng tiếng Việt ngắn gọn, dễ hiểu cho sinh viên trong team.",
@@ -146,10 +158,12 @@ async function main() {
   const payload = await response.json();
   const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text).join("\n") ?? "";
   const parsed = extractJson(text);
+  const critical = asIssueArray(parsed.critical).filter((issue) => !isResolvedNonActionableIssue(issue));
+  const warnings = asIssueArray(parsed.warnings).filter((issue) => !isResolvedNonActionableIssue(issue));
   const review = {
     summary: String(parsed.summary ?? "AI review backend đã hoàn tất."),
-    critical: asIssueArray(parsed.critical),
-    warnings: asIssueArray(parsed.warnings)
+    critical,
+    warnings
   };
   const gate = {
     passed: review.critical.length === 0 && review.warnings.length <= 5,

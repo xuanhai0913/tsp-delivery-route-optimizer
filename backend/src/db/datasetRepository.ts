@@ -99,12 +99,14 @@ function toNode(row: GraphNodeRow): GraphNode {
   };
 }
 
-function parseDatabaseCount(value: string | number): number {
-  if (typeof value === "string") {
-    return Number(value);
+export function parseDatabaseCount(value: string | number, label: string): number {
+  const count = Number(value);
+
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error(`Invalid database count for ${label}: expected a non-negative integer.`);
   }
 
-  return value;
+  return count;
 }
 
 export async function listDatasetSummariesFromDatabase(pool: pg.Pool): Promise<DatasetSummary[]> {
@@ -128,8 +130,8 @@ export async function listDatasetSummariesFromDatabase(pool: pg.Pool): Promise<D
   return result.rows.map((row) => ({
     id: row.dataset_id,
     name: row.name,
-    nodeCount: parseDatabaseCount(row.node_count),
-    edgeCount: parseDatabaseCount(row.edge_count),
+    nodeCount: parseDatabaseCount(row.node_count, "nodes"),
+    edgeCount: parseDatabaseCount(row.edge_count, "edges"),
     defaultSource: row.default_source_node_id,
     defaultTarget: row.default_target_node_id
   }));

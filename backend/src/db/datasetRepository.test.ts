@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseEdgeGeometry } from "./datasetRepository.js";
+import { parseDatabaseCount, parseEdgeGeometry } from "./datasetRepository.js";
 
 describe("datasetRepository geometry parsing", () => {
   it("returns undefined when edge geometry is not provided", () => {
@@ -41,5 +41,18 @@ describe("datasetRepository geometry parsing", () => {
     expect(() => parseEdgeGeometry([{ lat: 10, lng: 106 }, { lat: 11 }], "bad-point")).toThrow(
       "bad-point"
     );
+  });
+});
+
+describe("datasetRepository database counts", () => {
+  it("parses PostgreSQL count values returned as strings or numbers", () => {
+    expect(parseDatabaseCount("12", "nodes")).toBe(12);
+    expect(parseDatabaseCount(7, "edges")).toBe(7);
+  });
+
+  it("rejects invalid PostgreSQL count values", () => {
+    expect(() => parseDatabaseCount("not-a-count", "nodes")).toThrow("nodes");
+    expect(() => parseDatabaseCount(-1, "edges")).toThrow("edges");
+    expect(() => parseDatabaseCount(1.5, "edges")).toThrow("edges");
   });
 });
