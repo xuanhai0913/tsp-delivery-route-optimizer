@@ -1,4 +1,5 @@
 import type { PathSolveRequest, PathSolveResult } from "../types/path.js";
+import { solveDijkstra } from "../algorithms/dijkstra/dijkstra.js";
 
 export type SolverAlgorithm = "dijkstra" | "a-star";
 
@@ -8,6 +9,10 @@ export class SolverNotImplementedError extends Error {
   }
 }
 
-export function solveShortestPath(algorithm: SolverAlgorithm, _request: PathSolveRequest): PathSolveResult {
+export function solveShortestPath(algorithm: SolverAlgorithm, request: PathSolveRequest): PathSolveResult {
+  if (algorithm === "dijkstra") {
+    return solveDijkstra(request);
+  }
+
   throw new SolverNotImplementedError(algorithm);
 }

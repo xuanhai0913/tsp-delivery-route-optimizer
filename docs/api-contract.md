@@ -144,16 +144,7 @@ Runs the Dijkstra shortest-path strategy.
 
 ### Response
 
-Backend solver implementation is pending in the migration commit, so valid requests currently return:
-
-```json
-{
-  "error": "Shortest-path solver is not implemented yet.",
-  "algorithm": "dijkstra"
-}
-```
-
-Final solver response will be:
+Successful response:
 
 ```json
 {
@@ -184,6 +175,15 @@ Final solver response will be:
 Runs the A* shortest-path strategy using a coordinate heuristic.
 
 Request and final response shape match `POST /api/solve/dijkstra`.
+
+Backend A* API wiring is still pending, so valid requests can temporarily return:
+
+```json
+{
+  "error": "Shortest-path solver is not implemented yet.",
+  "algorithm": "a-star"
+}
+```
 
 ## Validation Direction
 

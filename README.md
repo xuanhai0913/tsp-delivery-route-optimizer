@@ -29,8 +29,9 @@
 
 Production frontend domain: [maps.hailamdev.space](https://maps.hailamdev.space)
 
-The current frontend is deployed with graph demo data and a mock solver service
-while the backend Dijkstra/A* solvers are still pending.
+The current frontend is deployed with graph demo data and a mock solver service.
+The backend Dijkstra endpoint now returns real shortest-path results; A* API
+wiring is still reserved for Member 2.
 
 ## Overview
 
@@ -61,7 +62,7 @@ visual layer for a classroom graph algorithm demo.
 
 ```text
 RouteLab Group 1/
-  backend/   Node.js + Express API and shortest-path solver skeleton
+  backend/   Node.js + Express API and shortest-path solvers
   frontend/  React + Vite + TypeScript user interface
   data/      Sample graph nodes and weighted edges
   docs/      API contract, algorithm notes, tests, report, slides

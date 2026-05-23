@@ -56,15 +56,33 @@ describe("backend HTTP API", () => {
     expect(response.body.edges).toHaveLength(12);
   });
 
-  it("keeps shortest-path endpoints visible while backend solvers are pending", async () => {
+  it("solves Dijkstra shortest-path requests", async () => {
     const response = await request(app)
       .post("/api/solve/dijkstra")
+      .send(graphRequest)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      path: [0, 1, 2],
+      totalCost: 9
+    });
+    expect(response.body.runtimeMs).toEqual(expect.any(Number));
+    expect(response.body.visitedOrder).toEqual([0, 1, 2]);
+    expect(response.body.traceSteps.at(-1)).toMatchObject({
+      phase: "final-path",
+      currentNode: 2
+    });
+  });
+
+  it("keeps the A* endpoint visible while Member 2 wires the backend solver", async () => {
+    const response = await request(app)
+      .post("/api/solve/a-star")
       .send(graphRequest)
       .expect(501);
 
     expect(response.body).toMatchObject({
       error: "Shortest-path solver is not implemented yet.",
-      algorithm: "dijkstra"
+      algorithm: "a-star"
     });
   });
 
