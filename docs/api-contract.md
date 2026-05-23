@@ -175,15 +175,8 @@ Successful response:
 Runs the A* shortest-path strategy using a coordinate heuristic.
 
 Request and final response shape match `POST /api/solve/dijkstra`.
-
-Backend A* API wiring is still pending, so valid requests can temporarily return:
-
-```json
-{
-  "error": "Shortest-path solver is not implemented yet.",
-  "algorithm": "a-star"
-}
-```
+A* responses include `gCost`, `hCost`, and `fCost` inside `traceSteps[].nodes`
+so the frontend can show the state table for `f(n) = g(n) + h(n)`.
 
 ## Validation Direction
 

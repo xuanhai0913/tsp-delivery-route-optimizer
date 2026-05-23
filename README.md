@@ -30,8 +30,7 @@
 Production frontend domain: [maps.hailamdev.space](https://maps.hailamdev.space)
 
 The current frontend is deployed with graph demo data and a mock solver service.
-The backend Dijkstra endpoint now returns real shortest-path results; A* API
-wiring is still reserved for Member 2.
+The backend Dijkstra and A* endpoints now return real shortest-path results.
 
 ## Overview
 
@@ -114,15 +113,14 @@ Current state:
 - Frontend UI is implemented and available at [maps.hailamdev.space](https://maps.hailamdev.space).
 - Frontend currently uses mock graph data and mock Dijkstra/A* results.
 - Backend exposes graph dataset APIs and shortest-path solve endpoints.
+- Backend Dijkstra and A* solvers return `PathSolveResult` with replay-friendly trace data.
 - Backend can read datasets from PostgreSQL when `DATABASE_URL` is configured, with JSON sample fallback for local demo.
-- Backend solver implementation is intentionally pending in this migration commit.
 
 Next milestone:
 
-1. Implement backend Dijkstra solver.
-2. Implement backend A* solver and heuristic notes.
-3. Replace the frontend mock solver client with HTTP API calls.
-4. Prepare final report screenshots from the production frontend domain.
+1. Replace the frontend mock solver client with HTTP API calls.
+2. Verify Dijkstra/A* replay with backend `traceSteps`.
+3. Prepare final report screenshots from the production frontend domain.
 
 ## Documentation
 

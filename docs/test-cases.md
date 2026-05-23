@@ -4,8 +4,8 @@
 
 - Valid graph dataset loads with nodes, edges, default source, and default target.
 - Invalid dataset id returns `404` or `null` service result.
-- Valid solve request reaches `/api/solve/dijkstra` and returns `501` until solver implementation lands.
-- Valid solve request reaches `/api/solve/a-star` and returns `501` until solver implementation lands.
+- Valid solve request reaches `/api/solve/dijkstra` and returns path, total cost, runtime, visited nodes, and trace steps.
+- Valid solve request reaches `/api/solve/a-star` and returns path, total cost, runtime, visited nodes, heuristic metrics, and trace steps.
 - Invalid solve request rejects missing nodes, missing edges, invalid source/target, negative weights, and edge references to unknown nodes.
 
 ## Frontend

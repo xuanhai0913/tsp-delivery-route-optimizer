@@ -9,7 +9,7 @@ The service is prepared for Render/Railway-style deployment as `routelab-backend
 - Read and validate graph nodes and weighted edges.
 - Expose dataset APIs under `/api/datasets`.
 - Expose shortest-path solving APIs under `/api/solve`.
-- Return `501 Not Implemented` for solver endpoints until Dijkstra/A* are implemented.
+- Return Dijkstra and A* `PathSolveResult` payloads for backend/API integration.
 
 ## API
 

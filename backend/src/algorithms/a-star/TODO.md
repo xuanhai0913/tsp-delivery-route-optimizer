@@ -1,6 +1,6 @@
-# A* TODO
+# A* Notes
 
-- Implement A* shortest-path solver using `f(n) = g(n) + h(n)`.
-- Use coordinate distance as the heuristic for map-like demo data.
-- Ensure heuristic never overestimates for demo edge weights, or document the assumption.
-- Add tests comparing A* result cost with Dijkstra on the same graph.
+- A* solver is implemented with `f(n) = g(n) + h(n)`.
+- API results include `path`, `totalCost`, `runtimeMs`, `visitedOrder`, `relaxedEdges`, and `traceSteps`.
+- The backend scales the coordinate heuristic from graph edge weights to keep demo heuristics conservative.
+- Tests compare A* result cost with Dijkstra on the same graph.

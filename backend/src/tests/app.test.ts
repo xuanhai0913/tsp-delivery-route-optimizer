@@ -74,16 +74,27 @@ describe("backend HTTP API", () => {
     });
   });
 
-  it("keeps the A* endpoint visible while Member 2 wires the backend solver", async () => {
+  it("solves A* shortest-path requests with replay metrics", async () => {
     const response = await request(app)
       .post("/api/solve/a-star")
       .send(graphRequest)
-      .expect(501);
+      .expect(200);
 
     expect(response.body).toMatchObject({
-      error: "Shortest-path solver is not implemented yet.",
-      algorithm: "a-star"
+      path: [0, 1, 2],
+      totalCost: 9
     });
+    expect(response.body.runtimeMs).toEqual(expect.any(Number));
+    expect(response.body.visitedOrder).toEqual([0, 1, 2]);
+    expect(response.body.traceSteps.at(-1)).toMatchObject({
+      phase: "final-path",
+      currentNode: 2
+    });
+    expect(
+      response.body.traceSteps.some((step: { queue: Array<{ heuristic?: number }> }) =>
+        step.queue.some((entry) => entry.heuristic !== undefined)
+      )
+    ).toBe(true);
   });
 
   it("rejects invalid shortest-path solve requests", async () => {

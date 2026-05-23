@@ -2,7 +2,6 @@ import type { RequestHandler } from "express";
 
 import {
   solveShortestPath,
-  SolverNotImplementedError,
   type SolverAlgorithm
 } from "../services/solverService.js";
 import type { PathSolveRequest } from "../types/path.js";
@@ -23,14 +22,6 @@ function createSolveHandler(algorithm: SolverAlgorithm): RequestHandler {
     try {
       response.json(solveShortestPath(algorithm, request.body as PathSolveRequest));
     } catch (error) {
-      if (error instanceof SolverNotImplementedError) {
-        response.status(501).json({
-          error: "Shortest-path solver is not implemented yet.",
-          algorithm: error.algorithm
-        });
-        return;
-      }
-
       next(error);
     }
   };

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { astar } from "./aStar.js";
+import { astar, solveAStar } from "./aStar.js";
 import type { GraphNode, GraphEdge } from "../../types/path.js";
+import { solveDijkstra } from "../dijkstra/dijkstra.js";
 
 describe("A* Algorithm Comprehensive Tests", () => {
   const nodes: GraphNode[] = [
@@ -39,6 +40,74 @@ describe("A* Algorithm Comprehensive Tests", () => {
     const path = astar(nodes, edges, 2, 7);
     expect(path).toEqual([2, 3, 4, 7]);
   });
+
+  it("1b. Nên trả về PathSolveResult đủ dữ liệu cho API replay", () => {
+    const result = solveAStar({
+      source: 2,
+      target: 7,
+      nodes,
+      edges,
+      directed: false
+    });
+
+    expect(result.path).toEqual([2, 3, 4, 7]);
+    expect(result.totalCost).toBe(7.5);
+    expect(result.visitedOrder).toContain(2);
+    expect(result.relaxedEdges).toContainEqual({ from: 4, to: 7, cumulativeCost: 7.5 });
+    expect(result.traceSteps?.map((step) => step.phase)).toContain("select-current");
+    expect(result.traceSteps?.map((step) => step.phase)).toContain("relax-edge");
+    expect(result.traceSteps?.at(-1)).toMatchObject({
+      phase: "final-path",
+      currentNode: 7
+    });
+    expect(result.traceSteps?.some((step) => step.queue.some((entry) => entry.heuristic !== undefined))).toBe(true);
+    expect(result.traceSteps?.at(-1)?.nodes.find((node) => node.node === 7)).toMatchObject({
+      status: "path",
+      hCost: 0,
+      gCost: 7.5,
+      fCost: 7.5
+    });
+  });
+
+  it("1c. Nên cùng totalCost với Dijkstra trên cùng graph", () => {
+    const request = {
+      source: 2,
+      target: 7,
+      nodes,
+      edges,
+      directed: false
+    };
+
+    expect(solveAStar(request).totalCost).toBe(solveDijkstra(request).totalCost);
+  });
+
+  it("1d. Adapter API vẫn tối ưu khi tọa độ có thể làm heuristic gốc bị quá lớn", () => {
+    const overestimateNodes: GraphNode[] = [
+      { id: 20, name: "Start", lat: 0, lng: 0 },
+      { id: 21, name: "Target", lat: 0, lng: 0.001 },
+      { id: 22, name: "Far connector", lat: 50, lng: 0 }
+    ];
+    const overestimateEdges: GraphEdge[] = [
+      { id: "20-21", from: 20, to: 21, weight: 100 },
+      { id: "20-22", from: 20, to: 22, weight: 1 },
+      { id: "22-21", from: 22, to: 21, weight: 1 }
+    ];
+    const request = {
+      source: 20,
+      target: 21,
+      nodes: overestimateNodes,
+      edges: overestimateEdges,
+      directed: true
+    };
+
+    const aStarResult = solveAStar(request);
+    const dijkstraResult = solveDijkstra(request);
+
+    expect(aStarResult.path).toEqual([20, 22, 21]);
+    expect(aStarResult.totalCost).toBe(2);
+    expect(aStarResult.totalCost).toBe(dijkstraResult.totalCost);
+  });
+
   it("2. Nên tìm đường đi ngắn nhất 2", () => {
     const path = astar(nodes, edges, 9, 11);
     expect(path).toEqual([9, 10, 11]);
