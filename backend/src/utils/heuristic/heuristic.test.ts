@@ -4,8 +4,8 @@ import { GraphNode } from "../../types/path.js";
 
 describe("Heuristic Utility", () => {
   it("Phải trả về 0 nếu khoảng cách từ điểm hiện tại đến đích là 0 (cùng tọa độ)", () => {
-    const nodeA: GraphNode = { id: 1, name: "A", lat: 0, lng: 1 };
-    const nodeB: GraphNode = { id: 2, name: "B", lat: 0, lng: 2 };
+    const nodeA: GraphNode = { id: 1, name: "A", lat: 10.777, lng: 106.6953 };
+    const nodeB: GraphNode = { id: 2, name: "B", lat: 10.7866, lng: 106.7057 };
 
     const h = calculateHeuristic(nodeA, nodeB);
     expect(h).toBe(0.857);
