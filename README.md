@@ -21,7 +21,8 @@
   <a href="#features">Features</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#team-plan">Team Plan</a> ·
-  <a href="docs/api-contract.md">API Contract</a>
+  <a href="docs/api-contract.md">API Contract</a> ·
+  <a href="docs/database.md">Database</a>
 </p>
 
 ## Live Frontend
@@ -53,6 +54,7 @@ visual layer for a classroom graph algorithm demo.
 | Algorithms | Run Dijkstra and A* from backend services |
 | Comparison | Show path, total cost, runtime, visited nodes, and short notes |
 | Visualization | Display explored graph and final path on a map or SVG graph |
+| Database | Store graph datasets, nodes, weighted edges, road geometry, and future solver runs in PostgreSQL |
 | Report support | Keep API contract, algorithm notes, test cases, and demo script in `docs/` |
 
 ## Architecture
@@ -111,6 +113,7 @@ Current state:
 - Frontend UI is implemented and available at [maps.hailamdev.space](https://maps.hailamdev.space).
 - Frontend currently uses mock graph data and mock Dijkstra/A* results.
 - Backend exposes graph dataset APIs and shortest-path solve endpoints.
+- Backend can read datasets from PostgreSQL when `DATABASE_URL` is configured, with JSON sample fallback for local demo.
 - Backend solver implementation is intentionally pending in this migration commit.
 
 Next milestone:
@@ -123,6 +126,7 @@ Next milestone:
 ## Documentation
 
 - [API contract](docs/api-contract.md)
+- [Database design](docs/database.md)
 - [Algorithm notes](docs/algorithms.md)
 - [Test cases](docs/test-cases.md)
 - [Demo script](docs/demo-script.md)

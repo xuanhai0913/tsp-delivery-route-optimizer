@@ -6,6 +6,10 @@ const { Pool } = pg;
 
 let pool: pg.Pool | null = null;
 
+function getDatabaseUrl(): string | undefined {
+  return process.env.DATABASE_URL ?? process.env.DATABASE_PUBLIC_URL;
+}
+
 function shouldUseSsl(databaseUrl: string): boolean | { rejectUnauthorized: false } {
   if (process.env.DATABASE_SSL === "true") {
     return { rejectUnauthorized: false };
@@ -19,7 +23,7 @@ function shouldUseSsl(databaseUrl: string): boolean | { rejectUnauthorized: fals
 }
 
 export function getDatabasePool(): pg.Pool | null {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl) {
     return null;
@@ -49,4 +53,13 @@ export async function pingDatabase(): Promise<{ configured: boolean; latencyMs?:
     configured: true,
     latencyMs: Number((performance.now() - startedAt).toFixed(2))
   };
+}
+
+export async function closeDatabasePool(): Promise<void> {
+  if (!pool) {
+    return;
+  }
+
+  await pool.end();
+  pool = null;
 }

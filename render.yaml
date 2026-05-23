@@ -19,5 +19,9 @@ services:
         value: https://maps.hailamdev.space
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_PUBLIC_URL
+        sync: false
       - key: DATABASE_SSL
         value: "false"
+      - key: DATASET_SOURCE
+        value: auto

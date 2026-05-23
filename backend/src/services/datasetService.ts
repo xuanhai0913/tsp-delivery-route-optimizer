@@ -1,6 +1,8 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
+import { getDatabasePool } from "../db/pool.js";
+import { getDatasetFromDatabase, listDatasetSummariesFromDatabase } from "../db/datasetRepository.js";
 import type { Dataset, DatasetSummary, GraphEdge, GraphNode, ValidationIssue } from "../types/path.js";
 import { validateSolveRequest } from "../validators/solveRequestValidator.js";
 
@@ -125,6 +127,23 @@ function toSummary(dataset: Dataset): DatasetSummary {
   };
 }
 
+function shouldReadJsonOnly(): boolean {
+  return process.env.DATASET_SOURCE === "json";
+}
+
+function shouldRequireDatabase(): boolean {
+  return process.env.DATASET_SOURCE === "database";
+}
+
+function logDatabaseFallback(error: unknown): void {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`Dataset database read failed; falling back to JSON samples. ${message}`);
+}
+
 async function readDatasetFile(filePath: string): Promise<Dataset> {
   const content = await readFile(filePath, "utf8");
   const dataset = JSON.parse(content) as Partial<Dataset>;
@@ -139,6 +158,24 @@ async function readDatasetFile(filePath: string): Promise<Dataset> {
 }
 
 export async function listDatasets(): Promise<DatasetSummary[]> {
+  const pool = shouldReadJsonOnly() ? null : getDatabasePool();
+
+  if (pool) {
+    try {
+      const summaries = await listDatasetSummariesFromDatabase(pool);
+
+      if (summaries.length > 0 || shouldRequireDatabase()) {
+        return summaries;
+      }
+    } catch (error) {
+      if (shouldRequireDatabase()) {
+        throw error;
+      }
+
+      logDatabaseFallback(error);
+    }
+  }
+
   const samplesDirectory = await getSamplesDirectory();
   const files = (await readdir(samplesDirectory))
     .filter((fileName) => fileName.endsWith(".json"))
@@ -151,6 +188,24 @@ export async function listDatasets(): Promise<DatasetSummary[]> {
 export async function getDatasetById(id: string): Promise<Dataset | null> {
   if (!DATASET_ID_PATTERN.test(id)) {
     return null;
+  }
+
+  const pool = shouldReadJsonOnly() ? null : getDatabasePool();
+
+  if (pool) {
+    try {
+      const dataset = await getDatasetFromDatabase(pool, id);
+
+      if (dataset || shouldRequireDatabase()) {
+        return dataset;
+      }
+    } catch (error) {
+      if (shouldRequireDatabase()) {
+        throw error;
+      }
+
+      logDatabaseFallback(error);
+    }
   }
 
   const samplesDirectory = await getSamplesDirectory();

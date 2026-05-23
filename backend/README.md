@@ -110,3 +110,28 @@ The API runs on `http://localhost:3000` by default.
 Render deployment is configured by `/render.yaml`.
 Railway PostgreSQL is provided through `DATABASE_URL` as a deployment secret.
 Detailed setup notes are in `docs/backend-deploy-render.md`.
+
+## Database
+
+The backend can run without a database for local demos because dataset APIs fall
+back to `data/samples/*.json`. In production, set `DATABASE_URL` or
+`DATABASE_PUBLIC_URL` and seed PostgreSQL:
+
+```bash
+cd backend
+npm run db:setup
+```
+
+Useful checks:
+
+```bash
+curl http://localhost:3000/health/db
+```
+
+Dataset source behavior:
+
+- `DATASET_SOURCE=auto` default: use PostgreSQL when available, otherwise JSON samples.
+- `DATASET_SOURCE=database`: require PostgreSQL.
+- `DATASET_SOURCE=json`: force JSON samples.
+
+Schema notes are documented in `docs/database.md`.

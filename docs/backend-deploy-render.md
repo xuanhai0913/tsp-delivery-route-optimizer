@@ -29,9 +29,11 @@ Set these in Render Dashboard:
 | Key | Value |
 | --- | --- |
 | `DATABASE_URL` | Railway public PostgreSQL URL. Use the public proxy host, not `postgres.railway.internal`. |
+| `DATABASE_PUBLIC_URL` | Optional fallback name for Railway public PostgreSQL URL if `DATABASE_URL` is not set. |
 | `DATABASE_SSL` | `false` by default for the current Railway proxy. Set `true` only if Railway requires SSL. |
 | `CORS_ORIGIN` | `https://maps.hailamdev.space` |
 | `NODE_ENV` | `production` |
+| `DATASET_SOURCE` | `auto` by default. Use `database` to require PostgreSQL, or `json` to force sample files. |
 
 Do not commit database URLs to the repository.
 
@@ -76,3 +78,18 @@ Database connectivity can be checked manually with:
 ```text
 GET /health/db
 ```
+
+## Database Setup
+
+After `DATABASE_URL` or `DATABASE_PUBLIC_URL` is configured, run these commands
+from the Render shell or a local machine that can reach the database:
+
+```bash
+cd backend
+npm run db:setup
+```
+
+This applies SQL migrations from `backend/db/migrations/` and imports graph
+datasets from `data/samples/*.json`.
+
+The database schema is described in `docs/database.md`.
