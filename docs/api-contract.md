@@ -1,6 +1,6 @@
 # API Contract
 
-Planned backend API endpoints for the RouteLab shortest-path demo.
+Backend API endpoints for the RouteLab shortest-path demo.
 
 ## Shared Types
 

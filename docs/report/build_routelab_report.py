@@ -788,7 +788,7 @@ def build_report() -> None:
                 "Input chính là graph gồm nodes, edges, trọng số cạnh, source và target.",
                 "Dijkstra bảo đảm shortest path với trọng số không âm bằng relaxation và priority queue.",
                 "A* dùng thêm heuristic theo tọa độ để ưu tiên node có vẻ gần đích hơn.",
-                "Frontend hiện dùng mock/precomputed result để demo UI; backend đã có contract và skeleton solver.",
+                "Frontend gọi backend Render thật để lấy dataset và chạy Dijkstra/A*; mock local chỉ là fallback khi backend tạm thời chậm.",
             ]
         )
     )
@@ -918,7 +918,7 @@ while queue is not empty:
     story.append(make_table(result_rows, col_widths=[3.0 * cm, 3.4 * cm, 2.3 * cm, 5.1 * cm, 2.8 * cm], font_size=7.9))
     story.append(
         callout(
-            "Kết luận demo",
+            "Nhận xét demo",
             f"Cả hai thuật toán tìm path {short_path(dijkstra.path)} với tổng chi phí {dijkstra.total_cost:g}. Dijkstra là baseline chắc chắn; A* cho cách giải thích trực quan hơn vì có heuristic hướng về đích.",
             PALETTE["blue"],
             PALETTE["blue_light"],
@@ -949,21 +949,21 @@ while queue is not empty:
     story.extend(
         bullet_items(
             [
-                "Backend có test cho health endpoint, dataset graph endpoint, validator graph và solve endpoints skeleton.",
-                "Frontend có test cho validation, path cost, playback state, comparison table và mock solver contract.",
+                "Backend có test cho health endpoint, dataset graph endpoint, validator graph, Dijkstra, A*, priority queue, heuristic và solve endpoints.",
+                "Frontend có test cho API config, dataset client, solver client, validation, path cost, playback state và comparison table.",
                 "CI backend nên chặn deploy nếu typecheck/test/build lỗi hoặc AI review phát hiện lỗi nghiêm trọng.",
-                "Vercel deploy frontend tại maps.hailamdev.space; backend sẽ triển khai riêng sau khi solver thật hoàn thiện.",
+                "Frontend deploy trên Vercel tại maps.hailamdev.space; backend deploy trên Render tại routelab-backend.onrender.com.",
             ]
         )
     )
     story.append(p("Hướng phát triển sau migration", "H2"))
     roadmap_rows = [
         ["Hạng mục", "Đề xuất cải thiện"],
-        ["Backend solver", "Implement Dijkstra và A* thật, trả thêm visitedOrder/relaxedEdges để frontend replay đúng quá trình."],
-        ["Visualization", "Thêm lớp đường phố giả lập, animated vehicle, frontier heatmap, bảng priority queue theo từng step."],
+        ["Backend", "Lưu thêm lịch sử solve runs, thống kê runtime và dataset version để phục vụ báo cáo thực nghiệm."],
+        ["Visualization", "Thêm traffic/blocked road toggle để thay đổi trọng số cạnh và chứng minh path đổi theo điều kiện đường đi."],
         ["Data", "Tạo dataset có nhiều ngã rẽ để A* duyệt ít node hơn Dijkstra rõ ràng."],
-        ["Demo", "Chuẩn bị kịch bản 3 phút: chọn nguồn/đích, chạy Dijkstra, bật A*, so sánh visited nodes và giải thích heuristic."],
-        ["Report/slide", "Đưa graph map, trace relaxation và bảng so sánh vào slide cuối kỳ."],
+        ["Demo", "Chụp lại screenshot production sau deploy cuối và luyện kịch bản 3-5 phút."],
+        ["Report/slide", "Đưa graph map, trace relaxation và bảng so sánh backend thật vào slide cuối kỳ."],
     ]
     story.append(make_table(roadmap_rows, col_widths=[4.2 * cm, 12.4 * cm], font_size=8.4))
     screenshot = scaled_image(DASHBOARD_SCREENSHOT, 15.6 * cm, 7.8 * cm)

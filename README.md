@@ -29,8 +29,9 @@
 
 Production frontend domain: [maps.hailamdev.space](https://maps.hailamdev.space)
 
-The current frontend is deployed with graph demo data and a mock solver service.
-The backend Dijkstra and A* endpoints now return real shortest-path results.
+The production frontend loads graph data and Dijkstra/A* results from the
+Render backend. A local mock fallback remains available so the classroom demo
+does not go blank during Render cold starts or temporary network issues.
 
 ## Overview
 
@@ -48,7 +49,7 @@ visual layer for a classroom graph algorithm demo.
 
 ## Features
 
-| Area | Planned capability |
+| Area | Current capability |
 | --- | --- |
 | Data input | Choose sample graph datasets or edit nodes and weighted edges |
 | Algorithms | Run Dijkstra and A* from backend services |
@@ -70,7 +71,7 @@ RouteLab Group 1/
 
 ## API At A Glance
 
-Planned endpoints:
+Active endpoints:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
@@ -116,10 +117,11 @@ Current state:
 - Backend Dijkstra and A* solvers return `PathSolveResult` with replay-friendly trace data.
 - Backend can read datasets from PostgreSQL when `DATABASE_URL` is configured, with JSON sample fallback for local demo.
 
-Next milestone:
+Final submission checklist:
 
-1. Verify Dijkstra/A* replay with backend `traceSteps` on production frontend.
-2. Prepare final report screenshots from the production frontend domain.
+1. Re-capture final screenshots from [maps.hailamdev.space](https://maps.hailamdev.space) after the latest Vercel deployment.
+2. Export the final PDF report and algorithm guide PDFs from `docs/report/`.
+3. Rehearse the 3-5 minute demo script in [docs/demo-script.md](docs/demo-script.md).
 
 ## Documentation
 
@@ -128,6 +130,7 @@ Next milestone:
 - [Algorithm notes](docs/algorithms.md)
 - [Test cases](docs/test-cases.md)
 - [Demo script](docs/demo-script.md)
+- [Product readiness](docs/product-readiness.md)
 - [Brand assets](docs/brand-assets.md)
 - [Report outline](docs/report/README.md)
 - [Slides outline](docs/slides/README.md)
