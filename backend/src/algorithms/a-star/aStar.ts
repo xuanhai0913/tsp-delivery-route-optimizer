@@ -1,24 +1,49 @@
-import { GraphNode, GraphEdge } from "../../types/path.js";
+import type { GraphNode, GraphEdge } from "../../types/path.js";
 import { MinPriorityQueue } from "../../utils/priorityQueue/priorityQueue.js";
 import { calculateHeuristic } from "../../utils/heuristic/heuristic.js";
 import { reconstructPath } from "../../utils/path/path.js";
 
 // Thuật toán A* để tìm đường đi ngắn nhất
+type NeighborEdge = {
+  nodeId: number;
+  weight: number;
+};
+
+function getNeighborEdges(
+  nodeId: number,
+  edges: GraphEdge[],
+  directed: boolean,
+): NeighborEdge[] {
+  return edges.flatMap((edge) => {
+    if (edge.from === nodeId) {
+      return [{ nodeId: edge.to, weight: edge.weight }];
+    }
+
+    if (!directed && edge.to === nodeId) {
+      return [{ nodeId: edge.from, weight: edge.weight }];
+    }
+
+    return [];
+  });
+}
 
 export const astar = (
   nodes: GraphNode[],
   edges: GraphEdge[],
   startId: number,
   endId: number,
+  directed = false,
 ): number[] => {
   // khởi tạo các giá trị cần thiết
   const startNode = nodes.find((node) => node.id === startId);
   const endNode = nodes.find((node) => node.id === endId);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
   const gScores = new Map<number, number>(); // Chi phí từ start đến node hiện tại
   const fScores = new Map<number, number>(); // chi phí ước lượng từ start đến đích qua node hiện tại
   const previous = new Map<number, number>(); // Để truy vết đường đi
   const queue = new MinPriorityQueue<number>();
+  const visited = new Set<number>();
 
   if (!startNode || !endNode) {
     return [];
@@ -31,34 +56,49 @@ export const astar = (
   // thiết lập giá trị ban đầu
   gScores.set(startId, 0);
   fScores.set(startId, calculateHeuristic(startNode, endNode));
-  queue.push(startId, fScores.get(startId) || 0);
+  queue.push(startId, fScores.get(startId) ?? 0);
 
   // vòng lập thuật toán chính
   while (!queue.isEmpty()) {
     const currentId = queue.popMin()?.item;
-    if (currentId === endId) {
-      return reconstructPath(previous, endId);
-    } // Đã tìm thấy đích
     if (currentId === undefined) {
       // Cách này giúp bạn biết ngay nếu thuật toán rơi vào trường hợp "không tưởng"
       throw new Error(
         "Thuật toán A*: Hàng đợi bị rỗng bất ngờ (Queue underflow)!",
       );
     }
-    const neighbors = edges.filter((edge) => edge.from === currentId);
+
+    if (visited.has(currentId)) {
+      continue;
+    }
+
+    if (currentId === endId) {
+      return reconstructPath(previous, endId);
+    } // Đã tìm thấy đích
+
+    visited.add(currentId);
+
+    const neighbors = getNeighborEdges(currentId, edges, directed);
     for (const edge of neighbors) {
-      const tentativeG = (gScores.get(currentId) || 0) + edge.weight;
+      if (visited.has(edge.nodeId)) {
+        continue;
+      }
+
+      const neighborNode = nodeById.get(edge.nodeId);
+      if (!neighborNode) {
+        continue;
+      }
+
+      const tentativeG =
+        (gScores.get(currentId) ?? Number.POSITIVE_INFINITY) + edge.weight;
       // kiểm tra xem đường đi mới này và đường đi cũ đến điểm kế tiếp đường nào tốt hơn nếu đường mới tốt hơn thì
       // cập nhật lại gScore và fScore của điểm kế tiếp và lưu lại điểm hiện tại là cha của điểm kế tiếp để sau này truy vết đường đi
-      if (tentativeG < (gScores.get(edge.to) || Infinity)) {
-        previous.set(edge.to, currentId);
-        gScores.set(edge.to, tentativeG);
-        const h = calculateHeuristic(
-          nodes.find((node) => node.id === edge.to)!,
-          endNode,
-        );
-        fScores.set(edge.to, tentativeG + h);
-        queue.push(edge.to, fScores.get(edge.to) || 0);
+      if (tentativeG < (gScores.get(edge.nodeId) ?? Number.POSITIVE_INFINITY)) {
+        previous.set(edge.nodeId, currentId);
+        gScores.set(edge.nodeId, tentativeG);
+        const h = calculateHeuristic(neighborNode, endNode);
+        fScores.set(edge.nodeId, tentativeG + h);
+        queue.push(edge.nodeId, fScores.get(edge.nodeId) ?? 0);
       }
     }
   }

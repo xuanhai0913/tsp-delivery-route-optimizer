@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { astar } from "./aStart.js";
-import { GraphNode, GraphEdge } from "../../types/path.js";
+import { astar } from "./aStar.js";
+import type { GraphNode, GraphEdge } from "../../types/path.js";
 
 describe("A* Algorithm Comprehensive Tests", () => {
   const nodes: GraphNode[] = [
@@ -57,5 +57,15 @@ describe("A* Algorithm Comprehensive Tests", () => {
   it("5. Nếu bắt đầu bằng đích, trả về chính nó", () => {
     const path = astar(nodes, edges, 1, 1);
     expect(path).toEqual([1]);
+  });
+
+  it("6. Nên đi được cạnh ngược chiều khi graph không có hướng", () => {
+    const path = astar(nodes, edges, 7, 2);
+    expect(path).toEqual([7, 4, 3, 2]);
+  });
+
+  it("7. Không nên đi ngược cạnh khi graph có hướng", () => {
+    const path = astar(nodes, edges, 7, 2, true);
+    expect(path).toEqual([]);
   });
 });

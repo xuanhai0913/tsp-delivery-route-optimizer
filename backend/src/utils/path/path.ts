@@ -1,5 +1,3 @@
-import { GraphNode } from "../../types/path.js";
-
 // hàm để xuât ra đường đi từ node nguồn về node đích sau khi đã tìm được đường đi ngắn nhất
 
 export const reconstructPath = (
