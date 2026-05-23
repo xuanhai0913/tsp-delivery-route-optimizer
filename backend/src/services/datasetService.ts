@@ -7,6 +7,17 @@ import type { Dataset, DatasetSummary, GraphEdge, GraphNode, ValidationIssue } f
 import { validateSolveRequest } from "../validators/solveRequestValidator.js";
 
 const DATASET_ID_PATTERN = /^[a-z0-9-]+$/;
+const DATASET_DATABASE_UNAVAILABLE_MESSAGE =
+  "Dataset database is unavailable. Check DATABASE_URL or DATABASE_PUBLIC_URL.";
+
+export class DatasetDatabaseUnavailableError extends Error {
+  public readonly status = 503;
+
+  constructor(message = DATASET_DATABASE_UNAVAILABLE_MESSAGE, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "DatasetDatabaseUnavailableError";
+  }
+}
 
 async function pathExists(directoryPath: string): Promise<boolean> {
   try {
@@ -127,12 +138,24 @@ function toSummary(dataset: Dataset): DatasetSummary {
   };
 }
 
-function shouldReadJsonOnly(): boolean {
-  return process.env.DATASET_SOURCE === "json";
+function getDatasetSource(): "auto" | "database" | "json" {
+  const configuredSource = process.env.DATASET_SOURCE?.toLowerCase();
+
+  if (configuredSource === "database" || configuredSource === "json") {
+    return configuredSource;
+  }
+
+  return "auto";
 }
 
-function shouldRequireDatabase(): boolean {
-  return process.env.DATASET_SOURCE === "database";
+function getConfiguredDatabasePool() {
+  const pool = getDatabasePool();
+
+  if (!pool && getDatasetSource() === "database") {
+    throw new DatasetDatabaseUnavailableError();
+  }
+
+  return pool;
 }
 
 function logDatabaseFallback(error: unknown): void {
@@ -158,18 +181,19 @@ async function readDatasetFile(filePath: string): Promise<Dataset> {
 }
 
 export async function listDatasets(): Promise<DatasetSummary[]> {
-  const pool = shouldReadJsonOnly() ? null : getDatabasePool();
+  const datasetSource = getDatasetSource();
+  const pool = datasetSource === "json" ? null : getConfiguredDatabasePool();
 
   if (pool) {
     try {
       const summaries = await listDatasetSummariesFromDatabase(pool);
 
-      if (summaries.length > 0 || shouldRequireDatabase()) {
+      if (summaries.length > 0 || datasetSource === "database") {
         return summaries;
       }
     } catch (error) {
-      if (shouldRequireDatabase()) {
-        throw error;
+      if (datasetSource === "database") {
+        throw new DatasetDatabaseUnavailableError(undefined, { cause: error });
       }
 
       logDatabaseFallback(error);
@@ -190,18 +214,19 @@ export async function getDatasetById(id: string): Promise<Dataset | null> {
     return null;
   }
 
-  const pool = shouldReadJsonOnly() ? null : getDatabasePool();
+  const datasetSource = getDatasetSource();
+  const pool = datasetSource === "json" ? null : getConfiguredDatabasePool();
 
   if (pool) {
     try {
       const dataset = await getDatasetFromDatabase(pool, id);
 
-      if (dataset || shouldRequireDatabase()) {
+      if (dataset || datasetSource === "database") {
         return dataset;
       }
     } catch (error) {
-      if (shouldRequireDatabase()) {
-        throw error;
+      if (datasetSource === "database") {
+        throw new DatasetDatabaseUnavailableError(undefined, { cause: error });
       }
 
       logDatabaseFallback(error);

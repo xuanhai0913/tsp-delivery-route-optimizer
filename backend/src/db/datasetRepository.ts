@@ -29,19 +29,65 @@ type GraphEdgeRow = {
   to_node_id: number;
   weight: number;
   label: string | null;
-  geometry: GeoPoint[] | string | null;
+  geometry: unknown;
 };
 
-function parseGeometry(geometry: GraphEdgeRow["geometry"]): GeoPoint[] | undefined {
-  if (!geometry) {
+function isGeoPoint(value: unknown): value is GeoPoint {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const point = value as Partial<GeoPoint>;
+
+  return (
+    typeof point.lat === "number" &&
+    Number.isFinite(point.lat) &&
+    typeof point.lng === "number" &&
+    Number.isFinite(point.lng)
+  );
+}
+
+export function parseEdgeGeometry(geometry: unknown, edgeId: string): GeoPoint[] | undefined {
+  if (geometry === null || geometry === undefined) {
     return undefined;
   }
 
+  let parsedGeometry: unknown = geometry;
+
   if (typeof geometry === "string") {
-    return JSON.parse(geometry) as GeoPoint[];
+    try {
+      parsedGeometry = JSON.parse(geometry) as unknown;
+    } catch {
+      throw new Error(`Invalid geometry for edge ${edgeId}: JSON string is malformed.`);
+    }
   }
 
-  return geometry;
+  if (!Array.isArray(parsedGeometry)) {
+    throw new Error(`Invalid geometry for edge ${edgeId}: expected an array of geo points.`);
+  }
+
+  if (parsedGeometry.length < 2) {
+    throw new Error(`Invalid geometry for edge ${edgeId}: expected at least 2 points.`);
+  }
+
+  if (!parsedGeometry.every(isGeoPoint)) {
+    throw new Error(`Invalid geometry for edge ${edgeId}: every point must include finite lat and lng.`);
+  }
+
+  return parsedGeometry;
+}
+
+function toEdge(row: GraphEdgeRow): GraphEdge {
+  const geometry = parseEdgeGeometry(row.geometry, row.edge_id);
+
+  return {
+    id: row.edge_id,
+    from: row.from_node_id,
+    to: row.to_node_id,
+    weight: row.weight,
+    ...(row.label ? { label: row.label } : {}),
+    ...(geometry ? { geometry } : {})
+  };
 }
 
 function toNode(row: GraphNodeRow): GraphNode {
@@ -53,15 +99,12 @@ function toNode(row: GraphNodeRow): GraphNode {
   };
 }
 
-function toEdge(row: GraphEdgeRow): GraphEdge {
-  return {
-    id: row.edge_id,
-    from: row.from_node_id,
-    to: row.to_node_id,
-    weight: row.weight,
-    ...(row.label ? { label: row.label } : {}),
-    ...(row.geometry ? { geometry: parseGeometry(row.geometry) } : {})
-  };
+function parseDatabaseCount(value: string | number): number {
+  if (typeof value === "string") {
+    return Number(value);
+  }
+
+  return value;
 }
 
 export async function listDatasetSummariesFromDatabase(pool: pg.Pool): Promise<DatasetSummary[]> {
@@ -85,8 +128,8 @@ export async function listDatasetSummariesFromDatabase(pool: pg.Pool): Promise<D
   return result.rows.map((row) => ({
     id: row.dataset_id,
     name: row.name,
-    nodeCount: Number(row.node_count),
-    edgeCount: Number(row.edge_count),
+    nodeCount: parseDatabaseCount(row.node_count),
+    edgeCount: parseDatabaseCount(row.edge_count),
     defaultSource: row.default_source_node_id,
     defaultTarget: row.default_target_node_id
   }));

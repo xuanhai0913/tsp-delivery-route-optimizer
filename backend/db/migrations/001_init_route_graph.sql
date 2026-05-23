@@ -55,7 +55,10 @@ CREATE TABLE IF NOT EXISTS graph_edges (
   CONSTRAINT graph_edges_weight_non_negative CHECK (weight >= 0),
   CONSTRAINT graph_edges_not_self_loop CHECK (from_node_id <> to_node_id),
   CONSTRAINT graph_edges_geometry_array
-    CHECK (geometry IS NULL OR jsonb_typeof(geometry) = 'array')
+    CHECK (
+      geometry IS NULL OR
+      (jsonb_typeof(geometry) = 'array' AND jsonb_array_length(geometry) >= 2)
+    )
 );
 
 CREATE INDEX IF NOT EXISTS graph_edges_dataset_from_idx
