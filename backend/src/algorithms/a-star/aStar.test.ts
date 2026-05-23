@@ -68,4 +68,21 @@ describe("A* Algorithm Comprehensive Tests", () => {
     const path = astar(nodes, edges, 7, 2, true);
     expect(path).toEqual([]);
   });
+
+  it("8. Nên cập nhật lại node nếu tìm được đường rẻ hơn sau khi đã đưa vào queue", () => {
+    const staleQueueNodes: GraphNode[] = [
+      { id: 20, name: "Start", lat: 0, lng: 0 },
+      { id: 21, name: "Target", lat: 0, lng: 10 },
+      { id: 22, name: "Connector", lat: 0, lng: 1 }
+    ];
+    const staleQueueEdges: GraphEdge[] = [
+      { id: "20-21", from: 20, to: 21, weight: 10 },
+      { id: "20-22", from: 20, to: 22, weight: 1 },
+      { id: "22-21", from: 22, to: 21, weight: 1 }
+    ];
+
+    const path = astar(staleQueueNodes, staleQueueEdges, 20, 21, true);
+
+    expect(path).toEqual([20, 22, 21]);
+  });
 });

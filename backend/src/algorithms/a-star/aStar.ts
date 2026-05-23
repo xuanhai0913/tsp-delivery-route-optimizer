@@ -9,6 +9,11 @@ type NeighborEdge = {
   weight: number;
 };
 
+type QueueNode = {
+  nodeId: number;
+  gScore: number;
+};
+
 function getNeighborEdges(
   nodeId: number,
   edges: GraphEdge[],
@@ -42,8 +47,7 @@ export const astar = (
   const gScores = new Map<number, number>(); // Chi phí từ start đến node hiện tại
   const fScores = new Map<number, number>(); // chi phí ước lượng từ start đến đích qua node hiện tại
   const previous = new Map<number, number>(); // Để truy vết đường đi
-  const queue = new MinPriorityQueue<number>();
-  const visited = new Set<number>();
+  const queue = new MinPriorityQueue<QueueNode>();
 
   if (!startNode || !endNode) {
     return [];
@@ -56,41 +60,35 @@ export const astar = (
   // thiết lập giá trị ban đầu
   gScores.set(startId, 0);
   fScores.set(startId, calculateHeuristic(startNode, endNode));
-  queue.push(startId, fScores.get(startId) ?? 0);
+  queue.push({ nodeId: startId, gScore: 0 }, fScores.get(startId) ?? 0);
 
   // vòng lập thuật toán chính
   while (!queue.isEmpty()) {
-    const currentId = queue.popMin()?.item;
-    if (currentId === undefined) {
-      // Cách này giúp bạn biết ngay nếu thuật toán rơi vào trường hợp "không tưởng"
-      throw new Error(
-        "Thuật toán A*: Hàng đợi bị rỗng bất ngờ (Queue underflow)!",
-      );
+    const current = queue.popMin()?.item;
+
+    if (!current) {
+      break;
     }
 
-    if (visited.has(currentId)) {
+    const currentId = current.nodeId;
+    const bestKnownG = gScores.get(currentId) ?? Number.POSITIVE_INFINITY;
+
+    if (current.gScore > bestKnownG) {
       continue;
     }
 
     if (currentId === endId) {
-      return reconstructPath(previous, endId);
-    } // Đã tìm thấy đích
-
-    visited.add(currentId);
+      continue;
+    }
 
     const neighbors = getNeighborEdges(currentId, edges, directed);
     for (const edge of neighbors) {
-      if (visited.has(edge.nodeId)) {
-        continue;
-      }
-
       const neighborNode = nodeById.get(edge.nodeId);
       if (!neighborNode) {
         continue;
       }
 
-      const tentativeG =
-        (gScores.get(currentId) ?? Number.POSITIVE_INFINITY) + edge.weight;
+      const tentativeG = current.gScore + edge.weight;
       // kiểm tra xem đường đi mới này và đường đi cũ đến điểm kế tiếp đường nào tốt hơn nếu đường mới tốt hơn thì
       // cập nhật lại gScore và fScore của điểm kế tiếp và lưu lại điểm hiện tại là cha của điểm kế tiếp để sau này truy vết đường đi
       if (tentativeG < (gScores.get(edge.nodeId) ?? Number.POSITIVE_INFINITY)) {
@@ -98,9 +96,10 @@ export const astar = (
         gScores.set(edge.nodeId, tentativeG);
         const h = calculateHeuristic(neighborNode, endNode);
         fScores.set(edge.nodeId, tentativeG + h);
-        queue.push(edge.nodeId, fScores.get(edge.nodeId) ?? 0);
+        queue.push({ nodeId: edge.nodeId, gScore: tentativeG }, fScores.get(edge.nodeId) ?? 0);
       }
     }
   }
-  return []; // không tìm thấy đường đi
+
+  return gScores.has(endId) ? reconstructPath(previous, endId) : []; // không tìm thấy đường đi
 };
