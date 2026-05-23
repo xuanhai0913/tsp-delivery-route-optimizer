@@ -4,6 +4,12 @@ import type { GraphEdge, PathSolveRequest, PathSolveResult } from "../../types/p
 import { MinPriorityQueue } from "../../utils/priorityQueue/priorityQueue.js";
 import { calculatePathCost } from "../../utils/route.js";
 
+// Thuật toán Dijkstra tìm đường đi ngắn nhất trên graph có trọng số không âm.
+// Ý tưởng chính:
+// - distances[node]: chi phí tốt nhất hiện biết từ source đến node.
+// - previous[node]: node đứng trước để truy vết lại đường đi cuối cùng.
+// - priority queue: luôn lấy node có distance nhỏ nhất ra xét trước.
+// - relax edge: nếu đi qua current làm đường tới neighbor rẻ hơn thì cập nhật.
 type NeighborEdge = {
   nodeId: number;
   weight: number;
@@ -25,6 +31,8 @@ function getNeighborEdges(
   edges: GraphEdge[],
   directed: boolean,
 ): NeighborEdge[] {
+  // Lấy các cạnh kề của node hiện tại. Với graph không có hướng, cạnh to -> from
+  // cũng được xem như một hướng đi hợp lệ.
   return edges
     .flatMap((edge) => {
       if (edge.from === nodeId) {
@@ -54,6 +62,8 @@ function queueSnapshot(
 ): QueueEntry[] {
   const bestByNode = new Map<number, QueueEntry>();
 
+  // Snapshot chỉ dùng cho replay UI. Vì một node có thể được push vào queue
+  // nhiều lần khi tìm được đường tốt hơn, ta bỏ các bản ghi đã visited/stale.
   for (const item of queueItems) {
     const bestKnownDistance = distances.get(item.nodeId) ?? Number.POSITIVE_INFINITY;
     if (visited.has(item.nodeId) || item.cost > bestKnownDistance) {
@@ -145,6 +155,7 @@ function reconstructDijkstraPath(
   const path = [target];
   let current = target;
 
+  // Dò ngược target -> source bằng previous, rồi unshift để có path source -> target.
   while (current !== source) {
     const parent = previous.get(current);
     if (parent === undefined) {
@@ -165,6 +176,8 @@ export function dijkstra(
   target: number,
   directed = false,
 ): number[] {
+  // Helper gọn cho phần thuật toán: chỉ trả path để dễ test/giải thích trên lớp.
+  // API đầy đủ dùng solveDijkstra(...) bên dưới để có runtime và traceSteps.
   return solveDijkstra({
     source,
     target,
@@ -177,9 +190,9 @@ export function dijkstra(
 export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
   const startedAt = performance.now();
   const distances = new Map(request.nodes.map((node) => [node.id, Number.POSITIVE_INFINITY]));
-  const previous = new Map<number, number>();
-  const visited = new Set<number>();
-  const queue = new MinPriorityQueue<QueueItem>();
+  const previous = new Map<number, number>(); // Lưu cha của mỗi node để reconstruct path.
+  const visited = new Set<number>(); // Node đã được chốt shortest distance.
+  const queue = new MinPriorityQueue<QueueItem>(); // Min-heap theo cost nhỏ nhất.
   const queueItems: QueueItem[] = [];
   const visitedOrder: number[] = [];
   const relaxedEdges: NonNullable<PathSolveResult["relaxedEdges"]> = [];
@@ -189,6 +202,7 @@ export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
   let sequence = 0;
 
   function enqueue(nodeId: number, cost: number): void {
+    // sequence giúp phân biệt các bản ghi queue khác nhau của cùng một node.
     const item = { nodeId, cost, sequence };
     sequence += 1;
     queue.push(item, cost);
@@ -198,6 +212,7 @@ export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
   distances.set(request.source, 0);
   enqueue(request.source, 0);
 
+  // Vòng lặp chính của Dijkstra: lấy node có dist nhỏ nhất, rồi relax các cạnh kề.
   while (!queue.isEmpty()) {
     const currentItem = queue.popMin()?.item;
     if (!currentItem) {
@@ -208,6 +223,7 @@ export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
 
     const bestKnownDistance = distances.get(currentItem.nodeId) ?? Number.POSITIVE_INFINITY;
     if (visited.has(currentItem.nodeId) || currentItem.cost > bestKnownDistance) {
+      // Bỏ qua nếu node đã chốt hoặc đây là bản ghi queue cũ với cost lớn hơn.
       continue;
     }
 
@@ -231,6 +247,7 @@ export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
     });
 
     if (currentNode === request.target) {
+      // Khi target được lấy ra khỏi priority queue, dist của nó đã là tối ưu.
       break;
     }
 
@@ -241,6 +258,8 @@ export function solveDijkstra(request: PathSolveRequest): PathSolveResult {
 
       const nextDistance = bestKnownDistance + neighbor.weight;
       if (nextDistance < (distances.get(neighbor.nodeId) ?? Number.POSITIVE_INFINITY)) {
+        // Relax edge: tìm được đường rẻ hơn tới neighbor nên cập nhật dist,
+        // lưu previous để lát nữa dựng lại path, rồi đưa neighbor vào queue.
         distances.set(neighbor.nodeId, nextDistance);
         previous.set(neighbor.nodeId, currentNode);
         enqueue(neighbor.nodeId, nextDistance);
