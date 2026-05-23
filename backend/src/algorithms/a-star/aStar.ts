@@ -78,7 +78,7 @@ export const astar = (
     }
 
     if (currentId === endId) {
-      continue;
+      return reconstructPath(previous, endId);
     }
 
     const neighbors = getNeighborEdges(currentId, edges, directed);
@@ -101,5 +101,5 @@ export const astar = (
     }
   }
 
-  return gScores.has(endId) ? reconstructPath(previous, endId) : []; // không tìm thấy đường đi
+  return []; // không tìm thấy đường đi
 };
