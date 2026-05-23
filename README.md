@@ -111,16 +111,15 @@ The project is split into 4 parallel workstreams from **19/05/2026** to
 Current state:
 
 - Frontend UI is implemented and available at [maps.hailamdev.space](https://maps.hailamdev.space).
-- Frontend currently uses mock graph data and mock Dijkstra/A* results.
+- Frontend loads graph data and Dijkstra/A* results from the Render backend, with local mock fallback for demo resilience.
 - Backend exposes graph dataset APIs and shortest-path solve endpoints.
 - Backend Dijkstra and A* solvers return `PathSolveResult` with replay-friendly trace data.
 - Backend can read datasets from PostgreSQL when `DATABASE_URL` is configured, with JSON sample fallback for local demo.
 
 Next milestone:
 
-1. Replace the frontend mock solver client with HTTP API calls.
-2. Verify Dijkstra/A* replay with backend `traceSteps`.
-3. Prepare final report screenshots from the production frontend domain.
+1. Verify Dijkstra/A* replay with backend `traceSteps` on production frontend.
+2. Prepare final report screenshots from the production frontend domain.
 
 ## Documentation
 

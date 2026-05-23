@@ -2,8 +2,8 @@
 
 React + Vite + TypeScript frontend for the shortest-path classroom demo.
 
-The app currently runs with graph mock data and a mock solver service so the UI
-can be deployed before the backend Dijkstra/A* solvers are ready.
+The app loads graph datasets and Dijkstra/A* results from the Render backend,
+with local mock fallback when the backend is unavailable.
 
 ## Production Domain
 
@@ -42,6 +42,20 @@ Use these Vercel project settings when deploying the frontend directly:
 The repository root also includes a `vercel.json` that builds `frontend/` and
 outputs `frontend/dist`, so deploying from the repo root is supported too.
 
+Environment variables:
+
+```bash
+# Local dev: leave empty to use the Vite /api proxy.
+# Vercel: set to https://routelab-backend.onrender.com.
+VITE_API_BASE_URL=
+VITE_ENABLE_MOCK_FALLBACK=true
+VITE_API_TIMEOUT_MS=30000
+```
+
+In local development, `vite.config.ts` proxies `/api` to the Render backend and
+sets the allowed production Origin header. This keeps browser testing close to
+production while avoiding localhost CORS noise.
+
 ## Screens
 
 - Dashboard: graph selector, source/target controls, Dijkstra/A* controls, map/graph visualization, result cards.
@@ -49,12 +63,11 @@ outputs `frontend/dist`, so deploying from the repo root is supported too.
 - Báo cáo: experiment snapshot, insights, path visualization, comparison table.
 - Hướng dẫn: shortest path, Dijkstra, and A* explanation cards.
 
-## Mock API Boundary
+## API Boundary
 
-The frontend calls `src/services/solverClient.ts`.
-
-When the backend is ready, replace the mock methods with HTTP calls while keeping
-the same contract:
+The frontend calls `src/services/datasetClient.ts` for graph data and
+`src/services/solverClient.ts` for Dijkstra/A*. Both clients are API-first and
+fall back to local mock data/results when configured.
 
 ```ts
 type PathSolveRequest = {
@@ -75,7 +88,8 @@ type PathSolveResult = {
 };
 ```
 
-The mock client currently generates `traceSteps` for algorithm replay, including
-priority queue snapshots, node metrics, relaxed edges, and the final path step.
+The backend returns `traceSteps` for algorithm replay, including priority queue
+snapshots, node metrics, relaxed edges, and the final path step. The mock fallback
+keeps the same shape for offline demos.
 `GraphEdge.geometry` is optional and lets the map draw road-like polylines
 instead of straight node-to-node lines.

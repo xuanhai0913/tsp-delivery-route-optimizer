@@ -10,6 +10,7 @@ import type {
 } from "../types/path";
 import { calculatePathCost } from "../utils/route";
 import { validateSolveRequest } from "../utils/validation";
+import { fetchApiJson, isMockFallbackEnabled } from "./apiConfig";
 
 const DIJKSTRA_MIN_RUNTIME_MS = 8.4;
 const A_STAR_MIN_RUNTIME_MS = 5.7;
@@ -33,6 +34,44 @@ function assertValidRequest(request: SolveRequest): void {
   if (blockingIssue) {
     throw new Error(blockingIssue.message);
   }
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isSolveResult(value: unknown): value is SolveResult {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const result = value as Partial<SolveResult>;
+  const hasValidTraceSteps = result.traceSteps === undefined || Array.isArray(result.traceSteps);
+
+  return Array.isArray(result.path) &&
+    result.path.every(Number.isInteger) &&
+    isFiniteNumber(result.totalCost) &&
+    isFiniteNumber(result.runtimeMs) &&
+    hasValidTraceSteps;
+}
+
+async function postSolve(endpoint: "/api/solve/dijkstra" | "/api/solve/a-star", request: SolveRequest): Promise<SolveResult> {
+  const result = await fetchApiJson<unknown>(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!isSolveResult(result)) {
+    throw new Error("Backend solve response is invalid.");
+  }
+
+  return {
+    ...result,
+    resultSource: "backend",
+  };
 }
 
 function delay(ms: number): Promise<void> {
@@ -326,6 +365,7 @@ function solveDijkstraMock(request: SolveRequest): SolveResult {
     path,
     totalCost,
     runtimeMs: Number(Math.max(elapsed, DIJKSTRA_MIN_RUNTIME_MS).toFixed(2)),
+    resultSource: "mock",
     visitedOrder,
     relaxedEdges,
     traceSteps,
@@ -447,13 +487,14 @@ function solveAStarMock(request: SolveRequest): SolveResult {
     path,
     totalCost,
     runtimeMs: Number(Math.max(elapsed, A_STAR_MIN_RUNTIME_MS).toFixed(2)),
+    resultSource: "mock",
     visitedOrder,
     relaxedEdges,
     traceSteps,
   };
 }
 
-export const solverClient = {
+export const mockSolverClient = {
   async solveDijkstra(request: SolveRequest): Promise<SolveResult> {
     assertValidRequest(request);
     await delay(520);
@@ -464,5 +505,33 @@ export const solverClient = {
     assertValidRequest(request);
     await delay(430);
     return solveAStarMock(request);
+  },
+};
+
+async function solveWithFallback(
+  request: SolveRequest,
+  endpoint: "/api/solve/dijkstra" | "/api/solve/a-star",
+  fallback: () => Promise<SolveResult>,
+): Promise<SolveResult> {
+  assertValidRequest(request);
+
+  try {
+    return await postSolve(endpoint, request);
+  } catch (error) {
+    if (isMockFallbackEnabled()) {
+      return fallback();
+    }
+
+    throw error;
+  }
+}
+
+export const solverClient = {
+  solveDijkstra(request: SolveRequest): Promise<SolveResult> {
+    return solveWithFallback(request, "/api/solve/dijkstra", () => mockSolverClient.solveDijkstra(request));
+  },
+
+  solveAStar(request: SolveRequest): Promise<SolveResult> {
+    return solveWithFallback(request, "/api/solve/a-star", () => mockSolverClient.solveAStar(request));
   },
 };

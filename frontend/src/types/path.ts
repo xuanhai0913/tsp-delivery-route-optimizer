@@ -32,6 +32,18 @@ export type Dataset = {
   defaultTarget: number;
 };
 
+export type DatasetSummary = {
+  id: string;
+  name: string;
+  nodeCount: number;
+  edgeCount: number;
+  defaultSource: number;
+  defaultTarget: number;
+};
+
+export type DatasetLoadSource = "backend" | "mock";
+export type SolveResultSource = "backend" | "mock";
+
 export type SolveRequest = {
   source: number;
   target: number;
@@ -83,6 +95,7 @@ export type SolveResult = {
   path: number[];
   totalCost: number;
   runtimeMs: number;
+  resultSource?: SolveResultSource;
   visitedOrder?: number[];
   relaxedEdges?: RelaxedEdge[];
   traceSteps?: AlgorithmTraceStep[];

@@ -83,7 +83,7 @@ export function ReportPage({ dataset, source, target, results, onExportJson, onE
             <li>
               {fastestRow
                 ? `${fastestRow.name} có thời gian chạy nhanh nhất trong lần demo này.`
-                : "Runtime sẽ hiển thị sau khi mock solver hoàn tất."}
+                : "Runtime sẽ hiển thị sau khi backend trả kết quả."}
             </li>
             <li>
               Dijkstra là baseline chắc chắn; A* dùng heuristic tọa độ để ưu tiên hướng gần đích.

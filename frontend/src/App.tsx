@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { AppShell } from "./components/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DataPage } from "./pages/DataPage";
 import { GuidePage } from "./pages/GuidePage";
 import { ReportPage } from "./pages/ReportPage";
 import { mockDatasets } from "./data/mockDatasets";
+import { datasetClient } from "./services/datasetClient";
 import { solverClient } from "./services/solverClient";
 import type { AlgorithmKey, Dataset, SolverState } from "./types/path";
 import { downloadJson, exportElementToPng } from "./utils/export";
@@ -17,6 +18,7 @@ const initialDataset = mockDatasets[0];
 export default function App() {
   const [activeView, setActiveView] = useState<ViewKey>("dashboard");
   const [isNavigating, startNavigationTransition] = useTransition();
+  const [datasets, setDatasets] = useState<Dataset[]>(mockDatasets);
   const [dataset, setDataset] = useState<Dataset>(initialDataset);
   const [source, setSource] = useState(initialDataset.defaultSource);
   const [target, setTarget] = useState(initialDataset.defaultTarget);
@@ -24,6 +26,52 @@ export default function App() {
   const [solving, setSolving] = useState<Partial<Record<AlgorithmKey, boolean>>>({});
   const [statusMessage, setStatusMessage] = useState("Graph mẫu đã sẵn sàng.");
   const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    setStatusMessage("Đang tải graph từ backend...");
+
+    datasetClient
+      .loadDatasets()
+      .then((result) => {
+        if (isCancelled) {
+          return;
+        }
+
+        const nextDataset =
+          result.datasets.find((item) => item.id === "hcm-7") ??
+          result.datasets[0] ??
+          initialDataset;
+
+        setDatasets(result.datasets.length > 0 ? result.datasets : mockDatasets);
+        setDataset(nextDataset);
+        setSource(nextDataset.defaultSource);
+        setTarget(nextDataset.defaultTarget);
+        setResults({});
+        setStatusMessage(
+          result.source === "backend"
+            ? "Đã tải graph từ backend."
+            : "Backend tạm thời chậm, đang dùng dữ liệu mock local."
+        );
+      })
+      .catch((error) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setDatasets(mockDatasets);
+        setDataset(initialDataset);
+        setSource(initialDataset.defaultSource);
+        setTarget(initialDataset.defaultTarget);
+        setResults({});
+        setStatusMessage(error instanceof Error ? error.message : "Không thể tải graph từ backend.");
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const validationIssues = useMemo(
     () => validateDataset(dataset, source, target),
@@ -38,6 +86,12 @@ export default function App() {
   };
 
   const applyDataset = (nextDataset: Dataset) => {
+    setDatasets((current) => {
+      const hasDataset = current.some((item) => item.id === nextDataset.id);
+      return hasDataset
+        ? current.map((item) => (item.id === nextDataset.id ? nextDataset : item))
+        : [nextDataset, ...current];
+    });
     setDataset(nextDataset);
     setSource(nextDataset.defaultSource);
     setTarget(nextDataset.defaultTarget);
@@ -62,7 +116,7 @@ export default function App() {
 
     const request = buildRequest();
     setSolving((current) => ({ ...current, [algorithm]: true }));
-    setStatusMessage(algorithm === "dijkstra" ? "Đang mô phỏng Dijkstra..." : "Đang mô phỏng A*...");
+    setStatusMessage(algorithm === "dijkstra" ? "Đang gọi backend Dijkstra..." : "Đang gọi backend A*...");
 
     try {
       const result =
@@ -70,7 +124,11 @@ export default function App() {
           ? await solverClient.solveDijkstra(request)
           : await solverClient.solveAStar(request);
       setResults((current) => ({ ...current, [algorithm]: result }));
-      setStatusMessage(`${algorithm === "dijkstra" ? "Dijkstra" : "A*"} đã hoàn thành.`);
+      setStatusMessage(
+        result.resultSource === "mock"
+          ? `${algorithm === "dijkstra" ? "Dijkstra" : "A*"} dùng fallback mock local.`
+          : `Đã nhận kết quả ${algorithm === "dijkstra" ? "Dijkstra" : "A*"} từ backend.`
+      );
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Không thể chạy thuật toán.");
     } finally {
@@ -86,7 +144,7 @@ export default function App() {
 
     const request = buildRequest();
     setSolving({ dijkstra: true, aStar: true });
-    setStatusMessage("Đang chạy mock Dijkstra và A* để so sánh...");
+    setStatusMessage("Đang gọi backend Dijkstra và A* để so sánh...");
 
     try {
       const [dijkstra, aStar] = await Promise.all([
@@ -94,7 +152,11 @@ export default function App() {
         solverClient.solveAStar(request),
       ]);
       setResults({ dijkstra, aStar });
-      setStatusMessage("Đã có kết quả so sánh shortest path.");
+      setStatusMessage(
+        dijkstra.resultSource === "mock" || aStar.resultSource === "mock"
+          ? "Backend tạm thời chậm, đã dùng fallback mock local để so sánh."
+          : "Đã nhận kết quả so sánh shortest path từ backend."
+      );
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Không thể chạy thuật toán.");
     } finally {
@@ -145,7 +207,7 @@ export default function App() {
         return (
           <DashboardPage
             dataset={dataset}
-            datasets={mockDatasets}
+            datasets={datasets}
             source={source}
             target={target}
             results={results}
