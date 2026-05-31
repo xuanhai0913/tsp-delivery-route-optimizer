@@ -7,6 +7,7 @@ type ResultCardProps = {
   result?: SolveResult;
   nodes: GraphNode[];
   isLoading?: boolean;
+  badges?: string[];
   activeStep?: number;
   activeNodeId?: number;
   isPlaybackTarget?: boolean;
@@ -18,6 +19,7 @@ export function ResultCard({
   result,
   nodes,
   isLoading,
+  badges = [],
   activeStep,
   activeNodeId,
   isPlaybackTarget,
@@ -47,6 +49,14 @@ export function ResultCard({
         <h3>{title}</h3>
         <span>{isLoading ? "Đang chạy" : result ? "Hoàn thành" : "Chưa chạy"}</span>
       </div>
+
+      {badges.length > 0 && result ? (
+        <div className="result-badges">
+          {badges.map((badge) => (
+            <span key={badge}>{badge}</span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="result-metrics">
         <div>

@@ -31,4 +31,17 @@ describe("ResultCard", () => {
 
     expect(screen.getAllByText("3")[0]).toHaveClass("active");
   });
+
+  it("renders scenario badges when provided", () => {
+    render(
+      <ResultCard
+        algorithm="dijkstra"
+        nodes={mockDatasets[0].nodes}
+        badges={["Traffic affected"]}
+        result={{ path: [1, 2, 5, 4, 6], totalCost: 10.9, runtimeMs: 6.4 }}
+      />
+    );
+
+    expect(screen.getByText("Traffic affected")).toBeInTheDocument();
+  });
 });

@@ -2,17 +2,21 @@ import { useEffect, useMemo } from "react";
 import { DivIcon, type LatLngBoundsExpression } from "leaflet";
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot, SolverState } from "../types/path";
+import type { AlgorithmKey, Coordinate, Dataset, RoadScenario, RoutePlaybackSnapshot, SolverState } from "../types/path";
 import { edgeToCoordinates, findEdge, pathToCoordinates } from "../utils/route";
 import { partialSegmentCoordinates, pathSegmentCoordinates } from "../utils/routeAnimation";
 
 type RouteMapProps = {
   dataset: Dataset;
+  baseDataset?: Dataset;
   results: SolverState;
   visibleRoutes: Record<AlgorithmKey, boolean>;
   source: number;
   target: number;
   playback?: RoutePlaybackSnapshot;
+  roadScenario?: RoadScenario;
+  affectedEdgeIds?: string[];
+  blockedEdgeIds?: string[];
 };
 
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression }) {
@@ -44,9 +48,18 @@ function createMarkerIcon(
 function createScoutIcon(algorithm: AlgorithmKey) {
   return new DivIcon({
     className: "shipper-marker-wrapper",
-    html: `<span class="shipper-marker ${algorithm}"><span class="shipper-core">▶</span></span>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+    html: `<span class="shipper-marker ${algorithm}"><span class="shipper-core">➤</span></span>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+  });
+}
+
+function createBlockedIcon() {
+  return new DivIcon({
+    className: "blocked-road-marker-wrapper",
+    html: `<span class="blocked-road-marker">×</span>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
   });
 }
 
@@ -84,15 +97,47 @@ function polylineOptions(algorithm: AlgorithmKey, variant: "context" | "complete
   };
 }
 
-export default function RouteMap({ dataset, results, visibleRoutes, source, target, playback }: RouteMapProps) {
+function midpoint(line: Coordinate[]): Coordinate | undefined {
+  return line.length > 0 ? line[Math.floor(line.length / 2)] : undefined;
+}
+
+export default function RouteMap({
+  dataset,
+  baseDataset,
+  results,
+  visibleRoutes,
+  source,
+  target,
+  playback,
+  roadScenario,
+  affectedEdgeIds = [],
+  blockedEdgeIds = [],
+}: RouteMapProps) {
+  const roadDataset = baseDataset ?? dataset;
+  const affectedEdgeSet = useMemo(() => new Set(affectedEdgeIds), [affectedEdgeIds]);
+  const blockedEdgeSet = useMemo(() => new Set(blockedEdgeIds), [blockedEdgeIds]);
   const bounds = useMemo(
     () => dataset.nodes.map((node) => [node.lat, node.lng]) as LatLngBoundsExpression,
     [dataset.nodes]
   );
 
   const graphEdgeLines = useMemo(
-    () => dataset.edges.map((edge) => edgeToCoordinates(edge, dataset.nodes, dataset.directed)).filter((line) => line.length >= 2),
-    [dataset.directed, dataset.edges, dataset.nodes]
+    () =>
+      roadDataset.edges
+        .map((edge) => ({
+          id: edge.id,
+          line: edgeToCoordinates(edge, roadDataset.nodes, roadDataset.directed),
+        }))
+        .filter((item) => item.line.length >= 2),
+    [roadDataset.directed, roadDataset.edges, roadDataset.nodes]
+  );
+  const affectedEdgeLines = useMemo(
+    () => graphEdgeLines.filter((item) => affectedEdgeSet.has(item.id) && !blockedEdgeSet.has(item.id)),
+    [affectedEdgeSet, blockedEdgeSet, graphEdgeLines]
+  );
+  const blockedEdgeLines = useMemo(
+    () => graphEdgeLines.filter((item) => blockedEdgeSet.has(item.id)),
+    [blockedEdgeSet, graphEdgeLines]
   );
 
   const pathLines = useMemo(
@@ -160,15 +205,43 @@ export default function RouteMap({ dataset, results, visibleRoutes, source, targ
       />
       <FitBounds bounds={bounds} />
 
-      {graphEdgeLines.map((line, index) => (
+      {graphEdgeLines.map(({ id, line }) => (
         <Polyline
-          key={`edge-${index}`}
+          key={`edge-${id}`}
           positions={line}
           pathOptions={{
             color: "#64748b",
-            weight: 2,
-            opacity: 0.22,
+            weight: 2.2,
+            opacity: blockedEdgeSet.has(id) ? 0.08 : 0.16,
             className: "map-graph-edge",
+          }}
+        />
+      ))}
+
+      {affectedEdgeLines.map(({ id, line }) => (
+        <Polyline
+          key={`traffic-${id}`}
+          positions={line}
+          pathOptions={{
+            color: roadScenario?.key === "rain" ? "#0ea5e9" : "#f97316",
+            weight: 8,
+            opacity: roadScenario?.key === "rain" ? 0.28 : 0.62,
+            dashArray: roadScenario?.key === "rain" ? "3 10" : "12 9",
+            className: `map-traffic-edge ${roadScenario?.key ?? "normal"}`,
+          }}
+        />
+      ))}
+
+      {blockedEdgeLines.map(({ id, line }) => (
+        <Polyline
+          key={`blocked-${id}`}
+          positions={line}
+          pathOptions={{
+            color: "#dc2626",
+            weight: 9,
+            opacity: 0.86,
+            dashArray: "2 10",
+            className: "map-blocked-edge",
           }}
         />
       ))}
@@ -233,6 +306,13 @@ export default function RouteMap({ dataset, results, visibleRoutes, source, targ
           zIndexOffset={900}
         />
       ) : null}
+
+      {blockedEdgeLines.map(({ id, line }) => {
+        const markerPosition = midpoint(line);
+        return markerPosition ? (
+          <Marker key={`blocked-marker-${id}`} position={markerPosition} icon={createBlockedIcon()} zIndexOffset={860} />
+        ) : null;
+      })}
 
       {dataset.nodes.map((node) => {
         const visitOrder = activeVisitOrder.get(node.id);

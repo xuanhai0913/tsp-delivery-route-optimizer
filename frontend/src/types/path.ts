@@ -41,8 +41,28 @@ export type DatasetSummary = {
   defaultTarget: number;
 };
 
+export type RoadScenarioKey = "normal" | "rain" | "rushHour" | "blockedRoad";
+
+export type RoadScenario = {
+  key: RoadScenarioKey;
+  label: string;
+  description: string;
+  affectedEdgeIds: string[];
+  weightMultiplier?: number;
+  blockedEdgeIds?: string[];
+};
+
 export type DatasetLoadSource = "backend" | "mock";
 export type SolveResultSource = "backend" | "mock";
+
+export type TerminalLogTone = "command" | "success" | "warning" | "error" | "info";
+
+export type TerminalLogEntry = {
+  id: string;
+  tone: TerminalLogTone;
+  message: string;
+  timestamp: string;
+};
 
 export type SolveRequest = {
   source: number;
