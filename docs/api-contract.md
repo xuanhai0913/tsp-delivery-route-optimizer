@@ -208,6 +208,10 @@ Notes for implementation:
 - Complexity is `O(V^3)`, so the demo should stay around 5-10 nodes.
 - Trace steps should show intermediate node `k` updates or a compact replay
   summary to avoid overwhelming the UI.
+- Because Floyd-Warshall updates matrix cells instead of relaxing one concrete
+  road edge, `traceSteps[].message` describes `dist[i][j]` updates. The
+  top-level `relaxedEdges` list is source-scoped so each `cumulativeCost`
+  remains a cost from `request.source`.
 - The backend detects negative-weight cycles at the core solver level. The
   public map demo still rejects negative road weights through validation.
 

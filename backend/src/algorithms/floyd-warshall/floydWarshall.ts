@@ -52,8 +52,12 @@ function buildNodeMetrics({
   path?: number[];
 }): NodeMetric[] {
   const pathSet = new Set(path);
+  const orderedNodeIds =
+    path.length > 0
+      ? [...path, ...nodeIds.filter((node) => !pathSet.has(node))]
+      : nodeIds;
 
-  return nodeIds.map((node) => {
+  return orderedNodeIds.map((node) => {
     const status: NodeMetric["status"] = pathSet.has(node)
       ? "path"
       : currentNode === node
@@ -226,21 +230,18 @@ export function solveFloydWarshall(request: PathSolveRequest): PathSolveResult {
           distances[i][j] = candidate;
           next[i][j] = next[i][k];
 
-          if (i === sourceIndex || j === targetIndex) {
-            const from = nodeIds[i];
-            const to = nodeIds[j];
-            const cumulativeCost = Number(candidate.toFixed(2));
-            relaxedEdges.push({ from, to, cumulativeCost });
+          const from = nodeIds[i];
+          const to = nodeIds[j];
+          const cumulativeCost = Number(candidate.toFixed(2));
 
+          if (i === sourceIndex) {
+            relaxedEdges.push({ from, to, cumulativeCost });
+          }
+
+          if (i === sourceIndex || j === targetIndex) {
             pushTraceStep(traceSteps, {
               phase: "relax-edge",
               currentNode: viaNode,
-              relaxedEdge: {
-                from,
-                to,
-                weight: cumulativeCost,
-                cumulativeCost,
-              },
               queue: [],
               nodes: buildNodeMetrics({
                 nodeIds,
@@ -252,7 +253,7 @@ export function solveFloydWarshall(request: PathSolveRequest): PathSolveResult {
                   : buildPreviousFromNextMatrix({ next, indexByNode, nodeIds, source: request.source }),
                 currentNode: viaNode,
               }),
-              message: `Dùng node ${viaNode} làm trung gian: cập nhật ${from} → ${to} = ${cumulativeCost}.`,
+              message: `Dùng node ${viaNode} làm trung gian: cập nhật dist[${from}][${to}] = ${cumulativeCost}.`,
             });
           }
         }

@@ -38,14 +38,16 @@ describe("floyd-warshall solver", () => {
     expect(result.totalCost).toBe(3);
     expect(result.visitedOrder).toEqual([0, 1, 2, 3, 4]);
     expect(result.relaxedEdges).toContainEqual({ from: 0, to: 3, cumulativeCost: 3 });
+    expect(result.relaxedEdges?.every((edge) => edge.from === 0)).toBe(true);
     expect(result.traceSteps?.map((step) => step.phase)).toContain("select-current");
     expect(result.traceSteps?.map((step) => step.phase)).toContain("relax-edge");
+    expect(result.traceSteps?.some((step) => step.relaxedEdge !== undefined)).toBe(false);
     expect(result.traceSteps?.at(-1)).toMatchObject({
       phase: "final-path",
       currentNode: 3
     });
     expect(result.traceSteps?.at(-1)?.nodes.filter((node) => node.status === "path").map((node) => node.node))
-      .toEqual([0, 1, 2, 3]);
+      .toEqual([0, 2, 1, 3]);
   });
 
   it("keeps a path-only helper for simple algorithm checks", () => {
