@@ -22,7 +22,8 @@
   <a href="#architecture">Architecture</a> ·
   <a href="#team-plan">Team Plan</a> ·
   <a href="docs/api-contract.md">API Contract</a> ·
-  <a href="docs/database.md">Database</a>
+  <a href="docs/database.md">Database</a> ·
+  <a href="https://docs.google.com/document/d/1TLUyWtiVm2hhXWqWmoooX0PCQcw9MQY-nQQSGVCnjho/edit?usp=sharing">Report Google Docs</a>
 </p>
 
 ## Live Frontend
@@ -146,6 +147,7 @@ Final submission checklist:
 
 ## Documentation
 
+- [Report Google Docs](https://docs.google.com/document/d/1TLUyWtiVm2hhXWqWmoooX0PCQcw9MQY-nQQSGVCnjho/edit?usp=sharing)
 - [API contract](docs/api-contract.md)
 - [Database design](docs/database.md)
 - [Algorithm notes](docs/algorithms.md)
