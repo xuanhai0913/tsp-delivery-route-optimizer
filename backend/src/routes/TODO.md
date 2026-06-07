@@ -5,3 +5,5 @@
 - Active endpoints:
   - `POST /api/solve/dijkstra`
   - `POST /api/solve/a-star`
+  - `POST /api/solve/floyd-warshall`
+  - `POST /api/solve/bellman-ford` (planned)

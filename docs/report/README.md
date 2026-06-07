@@ -1,13 +1,17 @@
 # Report
 
 Thư mục này chứa tài liệu PDF phục vụ báo cáo và thuyết trình cho scope mới:
-**mô phỏng tìm đường ngắn nhất trên bản đồ bằng Dijkstra và A\***.
+**mô phỏng tìm đường ngắn nhất trên bản đồ bằng Dijkstra, A\*, Bellman-Ford và Floyd-Warshall**.
 
 ## File đã xuất
 
 - `routelab-shortest-path-report.pdf`: báo cáo tổng quan project, kiến trúc, API, dữ liệu graph, kết quả thực nghiệm và hướng phát triển.
 - `dijkstra-guide.pdf`: tài liệu riêng giải thích Dijkstra, relaxation, priority queue, độ phức tạp và checklist kiểm thử.
 - `a-star-guide.pdf`: tài liệu riêng giải thích A*, công thức `f(n) = g(n) + h(n)`, heuristic theo tọa độ và so sánh với Dijkstra.
+- Planned: tài liệu riêng cho Bellman-Ford và Floyd-Warshall sau khi hai issue thuật toán mới được implement.
+
+Nguồn học thuật chính thống để đưa vào phần tài liệu tham khảo nằm ở
+[`../references.md`](../references.md).
 
 ## Cách xuất lại PDF
 

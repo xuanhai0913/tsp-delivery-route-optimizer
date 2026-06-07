@@ -3,7 +3,10 @@
 React + Vite + TypeScript frontend for the shortest-path classroom demo.
 
 The app loads graph datasets and Dijkstra/A* results from the Render backend,
-with local mock fallback when the backend is unavailable.
+with local mock fallback when the backend is unavailable. The backend already
+exposes Floyd-Warshall; frontend controls for it can use the same
+`PathSolveResult` shape when connected. Bellman-Ford remains the planned solver
+extension.
 
 ## Production Domain
 
@@ -58,15 +61,15 @@ production while avoiding localhost CORS noise.
 
 ## Screens
 
-- Dashboard: graph selector, source/target controls, Dijkstra/A* controls, map/graph visualization, result cards.
+- Dashboard: graph selector, source/target controls, algorithm controls, map/graph visualization, result cards.
 - Dữ liệu: node editor, edge editor, validation summary.
 - Báo cáo: experiment snapshot, insights, path visualization, comparison table.
-- Hướng dẫn: shortest path, Dijkstra, and A* explanation cards.
+- Hướng dẫn: shortest path, Dijkstra, A*, Bellman-Ford, and Floyd-Warshall explanation cards.
 
 ## API Boundary
 
 The frontend calls `src/services/datasetClient.ts` for graph data and
-`src/services/solverClient.ts` for Dijkstra/A*. Both clients are API-first and
+`src/services/solverClient.ts` for shortest-path solvers. Both clients are API-first and
 fall back to local mock data/results when configured.
 
 ```ts

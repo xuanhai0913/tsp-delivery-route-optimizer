@@ -97,6 +97,29 @@ describe("backend HTTP API", () => {
     ).toBe(true);
   });
 
+  it("solves Floyd-Warshall shortest-path requests with matrix replay metrics", async () => {
+    const response = await request(app)
+      .post("/api/solve/floyd-warshall")
+      .send(graphRequest)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      path: [0, 1, 2],
+      totalCost: 9
+    });
+    expect(response.body.runtimeMs).toEqual(expect.any(Number));
+    expect(response.body.visitedOrder).toEqual([0, 1, 2]);
+    expect(response.body.traceSteps.at(-1)).toMatchObject({
+      phase: "final-path",
+      currentNode: 2
+    });
+    expect(
+      response.body.traceSteps.some((step: { message: string }) =>
+        step.message.includes("Floyd-Warshall")
+      )
+    ).toBe(true);
+  });
+
   it("rejects invalid shortest-path solve requests", async () => {
     const response = await request(app)
       .post("/api/solve/a-star")

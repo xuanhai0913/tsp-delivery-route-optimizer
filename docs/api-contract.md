@@ -178,12 +178,47 @@ Request and final response shape match `POST /api/solve/dijkstra`.
 A* responses include `gCost`, `hCost`, and `fCost` inside `traceSteps[].nodes`
 so the frontend can show the state table for `f(n) = g(n) + h(n)`.
 
+## POST `/api/solve/bellman-ford`
+
+Planned endpoint for the Bellman-Ford shortest-path strategy.
+
+Request and final response shape should match `POST /api/solve/dijkstra`.
+Bellman-Ford should return a single-source shortest path from `source` to
+`target`, plus `visitedOrder`, `relaxedEdges`, and `traceSteps` when available.
+
+Notes for implementation:
+
+- It can support negative edge weights in theory, but the current map demo keeps
+  non-negative road weights for consistency with Dijkstra and A*.
+- It should detect negative-weight cycles and return a clear API error instead
+  of returning an invalid path.
+- Trace steps should highlight repeated relaxation rounds.
+
+## POST `/api/solve/floyd-warshall`
+
+Runs the Floyd-Warshall all-pairs shortest-path strategy.
+
+Request shape should match `POST /api/solve/dijkstra`. The response should still
+return a single `path` from `source` to `target` so the frontend can compare it
+with the other algorithms using the same `PathSolveResult` contract.
+
+Notes for implementation:
+
+- Build a distance matrix `dist[i][j]` and a next/predecessor matrix for path reconstruction.
+- Complexity is `O(V^3)`, so the demo should stay around 5-10 nodes.
+- Trace steps should show intermediate node `k` updates or a compact replay
+  summary to avoid overwhelming the UI.
+- The backend detects negative-weight cycles at the core solver level. The
+  public map demo still rejects negative road weights through validation.
+
 ## Validation Direction
 
 - `source` and `target` must be integer node ids that exist in `nodes`.
 - `source` and `target` should be different for the demo.
 - `nodes` must include unique ids, names, lat, and lng.
-- `edges` must reference existing nodes and use finite non-negative weights.
+- `edges` must reference existing nodes and use finite non-negative weights for the map demo.
+- Bellman-Ford may later allow negative weights in controlled test fixtures, but
+  production road scenarios should remain non-negative.
 - `geometry` is optional; when present it must contain at least two finite lat/lng points.
 - `traceSteps` is optional but recommended for algorithm replay UI.
 - Dataset ids use lowercase letters, numbers, and hyphens.

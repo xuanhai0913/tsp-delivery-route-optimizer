@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Classroom shortest-path lab for comparing Dijkstra and A* on weighted map graphs.</strong>
+  <strong>Classroom shortest-path lab for comparing Dijkstra, A*, Bellman-Ford, and Floyd-Warshall on weighted map graphs.</strong>
 </p>
 
 <p align="center">
@@ -29,9 +29,11 @@
 
 Production frontend domain: [maps.hailamdev.space](https://maps.hailamdev.space)
 
-The production frontend loads graph data and Dijkstra/A* results from the
-Render backend. A local mock fallback remains available so the classroom demo
-does not go blank during Render cold starts or temporary network issues.
+The production frontend currently loads graph data plus Dijkstra/A* results from
+the Render backend. The backend also exposes Floyd-Warshall, while Bellman-Ford
+remains the next algorithm extension issue. A local mock fallback remains
+available so the classroom demo does not go blank during Render cold starts or
+temporary network issues.
 
 ## Overview
 
@@ -39,10 +41,12 @@ This project simulates shortest-path search on a weighted map graph. Given a
 source node, target node, nodes, and weighted edges, the app visualizes the path
 with the lowest total cost.
 
-The demo compares two strategies:
+The final demo scope compares four shortest-path strategies:
 
 - **Dijkstra**: guarantees the shortest path for graphs with non-negative edge weights.
 - **A\***: uses a coordinate heuristic `f(n) = g(n) + h(n)` to guide the search toward the target.
+- **Bellman-Ford**: handles single-source shortest path and can detect negative-weight cycles.
+- **Floyd-Warshall**: computes all-pairs shortest paths using dynamic programming.
 
 This is not an implementation of Google Maps. The map is used only as a
 visual layer for a classroom graph algorithm demo.
@@ -52,7 +56,7 @@ visual layer for a classroom graph algorithm demo.
 | Area | Current capability |
 | --- | --- |
 | Data input | Choose sample graph datasets or edit nodes and weighted edges |
-| Algorithms | Run Dijkstra and A* from backend services |
+| Algorithms | Run Dijkstra, A*, and Floyd-Warshall from backend services; Bellman-Ford remains planned |
 | Comparison | Show path, total cost, runtime, visited nodes, and short notes |
 | Visualization | Display explored graph and final path on a map or SVG graph |
 | Database | Store graph datasets, nodes, weighted edges, road geometry, and future solver runs in PostgreSQL |
@@ -79,6 +83,13 @@ Active endpoints:
 | `GET` | `/api/datasets/:id` | Load one graph dataset |
 | `POST` | `/api/solve/dijkstra` | Run Dijkstra solver |
 | `POST` | `/api/solve/a-star` | Run A* solver |
+| `POST` | `/api/solve/floyd-warshall` | Run Floyd-Warshall solver |
+
+Planned algorithm endpoints:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/solve/bellman-ford` | Run Bellman-Ford solver |
 
 Shared response shape:
 
@@ -107,6 +118,15 @@ The project is split into 4 parallel workstreams from **19/05/2026** to
 | Member 3 | React UI, API integration, map/graph visualization | [#3](https://github.com/xuanhai0913/tsp-delivery-route-optimizer/issues/3) |
 | Member 4 | Testing, report, slides, demo script | [#4](https://github.com/xuanhai0913/tsp-delivery-route-optimizer/issues/4) |
 
+Algorithm ownership for the updated grading scope:
+
+| Member | Algorithm | Notes |
+| --- | --- | --- |
+| Member 1 | Dijkstra | Baseline shortest path for non-negative weights |
+| Member 2 | A* | Heuristic-guided shortest path |
+| Member 3 | Bellman-Ford | Negative-edge support and negative-cycle detection |
+| Member 4 | Floyd-Warshall | All-pairs shortest path and dynamic programming comparison |
+
 ## Development Status
 
 Current state:
@@ -114,7 +134,8 @@ Current state:
 - Frontend UI is implemented and available at [maps.hailamdev.space](https://maps.hailamdev.space).
 - Frontend loads graph data and Dijkstra/A* results from the Render backend, with local mock fallback for demo resilience.
 - Backend exposes graph dataset APIs and shortest-path solve endpoints.
-- Backend Dijkstra and A* solvers return `PathSolveResult` with replay-friendly trace data.
+- Backend Dijkstra, A*, and Floyd-Warshall solvers return `PathSolveResult` with replay-friendly trace data.
+- Bellman-Ford remains part of the official algorithm scope and is tracked as a separate GitHub issue before implementation.
 - Backend can read datasets from PostgreSQL when `DATABASE_URL` is configured, with JSON sample fallback for local demo.
 
 Final submission checklist:
@@ -128,6 +149,7 @@ Final submission checklist:
 - [API contract](docs/api-contract.md)
 - [Database design](docs/database.md)
 - [Algorithm notes](docs/algorithms.md)
+- [Academic references](docs/references.md)
 - [Test cases](docs/test-cases.md)
 - [Demo script](docs/demo-script.md)
 - [Product readiness](docs/product-readiness.md)

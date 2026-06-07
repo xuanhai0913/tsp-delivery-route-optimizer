@@ -29,3 +29,4 @@ function createSolveHandler(algorithm: SolverAlgorithm): RequestHandler {
 
 export const solveDijkstra = createSolveHandler("dijkstra");
 export const solveAStar = createSolveHandler("a-star");
+export const solveFloydWarshall = createSolveHandler("floyd-warshall");

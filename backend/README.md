@@ -10,6 +10,8 @@ The service is prepared for Render/Railway-style deployment as `routelab-backend
 - Expose dataset APIs under `/api/datasets`.
 - Expose shortest-path solving APIs under `/api/solve`.
 - Return Dijkstra and A* `PathSolveResult` payloads for backend/API integration.
+- Return Floyd-Warshall `PathSolveResult` payloads with matrix-update replay trace.
+- Track Bellman-Ford as the next solver extension.
 
 ## API
 
@@ -20,6 +22,8 @@ GET /api/datasets
 GET /api/datasets/:id
 POST /api/solve/dijkstra
 POST /api/solve/a-star
+POST /api/solve/floyd-warshall
+POST /api/solve/bellman-ford    # planned
 ```
 
 Solve request:
@@ -41,6 +45,8 @@ src/
   algorithms/
     dijkstra/
     a-star/
+    bellman-ford/
+    floyd-warshall/
   controllers/
   routes/
   services/
@@ -54,8 +60,8 @@ src/
 
 - Member 1: graph data, request validation, Dijkstra implementation and complexity notes.
 - Member 2: A* implementation, coordinate heuristic, correctness notes.
-- Member 3: consume backend APIs from frontend.
-- Member 4: test cases and verification scenarios.
+- Member 3: Bellman-Ford implementation, negative-cycle notes, and frontend API support.
+- Member 4: Floyd-Warshall implementation, DP matrix notes, and verification scenarios.
 
 ## TypeScript Direction
 
@@ -82,7 +88,9 @@ type PathSolveResult = {
 
 `GraphEdge.geometry` is optional and stores road-like polyline points for map
 visualization. `traceSteps` is optional but should be returned by the real
-Dijkstra/A* solver so the frontend can replay queue, relaxation, and node state.
+Dijkstra/A*/Floyd-Warshall solvers so the frontend can replay queue,
+relaxation, matrix updates, and node state. Bellman-Ford should follow the same
+result shape when added.
 
 ## Local Checks
 

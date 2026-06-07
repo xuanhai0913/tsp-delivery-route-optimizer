@@ -53,13 +53,13 @@ Indexes exist on `(dataset_id, from_node_id)` and `(dataset_id, to_node_id)` for
 
 ### `solver_runs`
 
-Reserved for saving Dijkstra/A* experiment output later.
+Reserved for saving shortest-path experiment output later.
 
 | Column | Type | Notes |
 | --- | --- | --- |
 | `run_id` | `bigint generated always as identity` | Primary key. |
 | `dataset_id` | `text` | Optional FK to dataset. |
-| `algorithm` | `text` | `dijkstra` or `a-star`. |
+| `algorithm` | `text` | `dijkstra`, `a-star`, `bellman-ford`, or `floyd-warshall`. |
 | `source_node_id`, `target_node_id` | `integer` | Request endpoints. |
 | `path` | `integer[]` | Result path. |
 | `total_cost`, `runtime_ms` | `double precision` | Metrics. |
