@@ -1,10 +1,27 @@
 import { useEffect, useMemo } from "react";
 import { DivIcon, type LatLngBoundsExpression } from "leaflet";
-import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  Polyline,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import type { AlgorithmKey, Coordinate, Dataset, RoadScenario, RoutePlaybackSnapshot, SolverState } from "../types/path";
+import type {
+  AlgorithmKey,
+  Coordinate,
+  Dataset,
+  RoadScenario,
+  RoutePlaybackSnapshot,
+  SolverState,
+} from "../types/path";
 import { edgeToCoordinates, findEdge, pathToCoordinates } from "../utils/route";
-import { partialSegmentCoordinates, pathSegmentCoordinates } from "../utils/routeAnimation";
+import {
+  partialSegmentCoordinates,
+  pathSegmentCoordinates,
+} from "../utils/routeAnimation";
 
 type RouteMapProps = {
   dataset: Dataset;
@@ -33,7 +50,7 @@ function createMarkerIcon(
   id: number,
   role: "source" | "target" | "default",
   status: "default" | "visited" | "current",
-  visitOrder?: number
+  visitOrder?: number,
 ) {
   return new DivIcon({
     className: "route-marker-wrapper",
@@ -63,7 +80,10 @@ function createBlockedIcon() {
   });
 }
 
-function polylineOptions(algorithm: AlgorithmKey, variant: "context" | "completed" | "current") {
+function polylineOptions(
+  algorithm: AlgorithmKey,
+  variant: "context" | "completed" | "current",
+) {
   const isDijkstra = algorithm === "dijkstra";
   const color = isDijkstra ? "#2563eb" : "#7c3aed";
   const baseDash = isDijkstra ? undefined : "9 7";
@@ -72,7 +92,7 @@ function polylineOptions(algorithm: AlgorithmKey, variant: "context" | "complete
     return {
       color,
       weight: 5,
-      opacity: 0.24,
+      opacity: 0.9,
       dashArray: baseDash,
       className: `map-route ${algorithm} context`,
     };
@@ -114,11 +134,21 @@ export default function RouteMap({
   blockedEdgeIds = [],
 }: RouteMapProps) {
   const roadDataset = baseDataset ?? dataset;
-  const affectedEdgeSet = useMemo(() => new Set(affectedEdgeIds), [affectedEdgeIds]);
-  const blockedEdgeSet = useMemo(() => new Set(blockedEdgeIds), [blockedEdgeIds]);
+  const affectedEdgeSet = useMemo(
+    () => new Set(affectedEdgeIds),
+    [affectedEdgeIds],
+  );
+  const blockedEdgeSet = useMemo(
+    () => new Set(blockedEdgeIds),
+    [blockedEdgeIds],
+  );
   const bounds = useMemo(
-    () => dataset.nodes.map((node) => [node.lat, node.lng]) as LatLngBoundsExpression,
-    [dataset.nodes]
+    () =>
+      dataset.nodes.map((node) => [
+        node.lat,
+        node.lng,
+      ]) as LatLngBoundsExpression,
+    [dataset.nodes],
   );
 
   const graphEdgeLines = useMemo(
@@ -126,45 +156,85 @@ export default function RouteMap({
       roadDataset.edges
         .map((edge) => ({
           id: edge.id,
-          line: edgeToCoordinates(edge, roadDataset.nodes, roadDataset.directed),
+          line: edgeToCoordinates(
+            edge,
+            roadDataset.nodes,
+            roadDataset.directed,
+          ),
         }))
         .filter((item) => item.line.length >= 2),
-    [roadDataset.directed, roadDataset.edges, roadDataset.nodes]
+    [roadDataset.directed, roadDataset.edges, roadDataset.nodes],
   );
   const affectedEdgeLines = useMemo(
-    () => graphEdgeLines.filter((item) => affectedEdgeSet.has(item.id) && !blockedEdgeSet.has(item.id)),
-    [affectedEdgeSet, blockedEdgeSet, graphEdgeLines]
+    () =>
+      graphEdgeLines.filter(
+        (item) => affectedEdgeSet.has(item.id) && !blockedEdgeSet.has(item.id),
+      ),
+    [affectedEdgeSet, blockedEdgeSet, graphEdgeLines],
   );
   const blockedEdgeLines = useMemo(
     () => graphEdgeLines.filter((item) => blockedEdgeSet.has(item.id)),
-    [blockedEdgeSet, graphEdgeLines]
+    [blockedEdgeSet, graphEdgeLines],
   );
 
   const pathLines = useMemo(
     () => ({
-      dijkstra: results.dijkstra ? pathToCoordinates(results.dijkstra.path, dataset.nodes, dataset.edges, dataset.directed) : [],
-      aStar: results.aStar ? pathToCoordinates(results.aStar.path, dataset.nodes, dataset.edges, dataset.directed) : [],
+      dijkstra: results.dijkstra
+        ? pathToCoordinates(
+            results.dijkstra.path,
+            dataset.nodes,
+            dataset.edges,
+            dataset.directed,
+          )
+        : [],
+      aStar: results.aStar
+        ? pathToCoordinates(
+            results.aStar.path,
+            dataset.nodes,
+            dataset.edges,
+            dataset.directed,
+          )
+        : [],
     }),
-    [dataset.directed, dataset.edges, dataset.nodes, results.aStar, results.dijkstra]
+    [
+      dataset.directed,
+      dataset.edges,
+      dataset.nodes,
+      results.aStar,
+      results.dijkstra,
+    ],
   );
 
   const activePathLine = useMemo(
     () => pathSegmentCoordinates(playback?.segments ?? []),
-    [playback?.segments]
+    [playback?.segments],
   );
   const completedPathLine = useMemo(() => {
-    if (!playback?.segments.length || playback.completedStepCount === 0 || playback.isTraceMode) {
+    if (
+      !playback?.segments.length ||
+      playback.completedStepCount === 0 ||
+      playback.isTraceMode
+    ) {
       return [];
     }
 
-    return pathSegmentCoordinates(playback.segments.slice(0, playback.completedStepCount));
+    return pathSegmentCoordinates(
+      playback.segments.slice(0, playback.completedStepCount),
+    );
   }, [playback?.completedStepCount, playback?.isTraceMode, playback?.segments]);
   const currentPathLine = useMemo(
     () =>
       playback?.currentSegment && playback.movingPosition
-        ? partialSegmentCoordinates(playback.currentSegment, playback.segmentProgress)
+        ? partialSegmentCoordinates(
+            playback.currentSegment,
+            playback.segmentProgress,
+          )
         : [],
-    [playback?.currentSegment, playback?.movingPosition, playback?.segmentProgress]
+    [
+      playback?.currentSegment,
+      playback?.movingPosition,
+      playback?.segmentProgress,
+    ],
   );
   const completedRelaxedLines = useMemo(
     () =>
@@ -172,10 +242,30 @@ export default function RouteMap({
         if (!step.relaxedEdge) {
           return [];
         }
-        const edge = findEdge(step.relaxedEdge.from, step.relaxedEdge.to, dataset.edges, dataset.directed);
-        return edge ? [edgeToCoordinates(edge, dataset.nodes, dataset.directed, step.relaxedEdge.from, step.relaxedEdge.to)] : [];
+        const edge = findEdge(
+          step.relaxedEdge.from,
+          step.relaxedEdge.to,
+          dataset.edges,
+          dataset.directed,
+        );
+        return edge
+          ? [
+              edgeToCoordinates(
+                edge,
+                dataset.nodes,
+                dataset.directed,
+                step.relaxedEdge.from,
+                step.relaxedEdge.to,
+              ),
+            ]
+          : [];
       }) ?? [],
-    [dataset.directed, dataset.edges, dataset.nodes, playback?.completedTraceSteps]
+    [
+      dataset.directed,
+      dataset.edges,
+      dataset.nodes,
+      playback?.completedTraceSteps,
+    ],
   );
   const activeRoute = playback?.algorithm;
   const activeResult = activeRoute ? results[activeRoute] : undefined;
@@ -184,10 +274,14 @@ export default function RouteMap({
     return new Map(visited.map((id, index) => [id, index]));
   }, [activeResult?.path, activeResult?.visitedOrder]);
   const activeNodeStatus = useMemo(() => {
-    const step = playback?.currentTraceStep ?? playback?.completedTraceSteps.at(-1);
+    const step =
+      playback?.currentTraceStep ?? playback?.completedTraceSteps.at(-1);
     return new Map(step?.nodes.map((node) => [node.node, node.status]) ?? []);
   }, [playback?.completedTraceSteps, playback?.currentTraceStep]);
-  const shouldShowFinalPath = !playback?.isTraceMode || playback.isComplete || playback.currentTraceStep?.phase === "final-path";
+  const shouldShowFinalPath =
+    !playback?.isTraceMode ||
+    playback.isComplete ||
+    playback.currentTraceStep?.phase === "final-path";
 
   const center = dataset.nodes[0];
 
@@ -267,7 +361,8 @@ export default function RouteMap({
           return null;
         }
 
-        const routeLine = algorithm === "dijkstra" ? pathLines.dijkstra : pathLines.aStar;
+        const routeLine =
+          algorithm === "dijkstra" ? pathLines.dijkstra : pathLines.aStar;
         if (routeLine.length === 0) {
           return null;
         }
@@ -276,23 +371,33 @@ export default function RouteMap({
         return (
           <Polyline
             key={`${algorithm}-context`}
-            positions={isActiveRoute && activePathLine.length > 0 ? activePathLine : routeLine}
+            positions={
+              isActiveRoute && activePathLine.length > 0
+                ? activePathLine
+                : routeLine
+            }
             pathOptions={polylineOptions(
               algorithm,
-              (isActiveRoute && !shouldShowFinalPath) || activeRoute ? "context" : "completed"
+              (isActiveRoute && !shouldShowFinalPath) || activeRoute
+                ? "context"
+                : "completed",
             )}
           />
         );
       })}
 
-      {activeRoute && visibleRoutes[activeRoute] && completedPathLine.length > 1 ? (
+      {activeRoute &&
+      visibleRoutes[activeRoute] &&
+      completedPathLine.length > 1 ? (
         <Polyline
           positions={completedPathLine}
           pathOptions={polylineOptions(activeRoute, "completed")}
         />
       ) : null}
 
-      {activeRoute && visibleRoutes[activeRoute] && currentPathLine.length > 1 ? (
+      {activeRoute &&
+      visibleRoutes[activeRoute] &&
+      currentPathLine.length > 1 ? (
         <Polyline
           positions={currentPathLine}
           pathOptions={polylineOptions(activeRoute, "current")}
@@ -310,7 +415,12 @@ export default function RouteMap({
       {blockedEdgeLines.map(({ id, line }) => {
         const markerPosition = midpoint(line);
         return markerPosition ? (
-          <Marker key={`blocked-marker-${id}`} position={markerPosition} icon={createBlockedIcon()} zIndexOffset={860} />
+          <Marker
+            key={`blocked-marker-${id}`}
+            position={markerPosition}
+            icon={createBlockedIcon()}
+            zIndexOffset={860}
+          />
         ) : null;
       })}
 
@@ -320,10 +430,23 @@ export default function RouteMap({
         const isVisited =
           traceStatus === "visited" ||
           traceStatus === "path" ||
-          (visitOrder !== undefined && !playback?.isTraceMode && visitOrder <= (playback?.completedStepCount ?? -1));
-        const isCurrent = traceStatus === "current" || (playback?.currentSegment?.to === node.id && !playback.isComplete);
-        const status = isCurrent ? "current" : isVisited ? "visited" : "default";
-        const role = node.id === source ? "source" : node.id === target ? "target" : "default";
+          (visitOrder !== undefined &&
+            !playback?.isTraceMode &&
+            visitOrder <= (playback?.completedStepCount ?? -1));
+        const isCurrent =
+          traceStatus === "current" ||
+          (playback?.currentSegment?.to === node.id && !playback.isComplete);
+        const status = isCurrent
+          ? "current"
+          : isVisited
+            ? "visited"
+            : "default";
+        const role =
+          node.id === source
+            ? "source"
+            : node.id === target
+              ? "target"
+              : "default";
 
         return (
           <Marker
@@ -333,7 +456,7 @@ export default function RouteMap({
               node.id,
               role,
               status,
-              visitOrder !== undefined ? visitOrder + 1 : undefined
+              visitOrder !== undefined ? visitOrder + 1 : undefined,
             )}
           >
             <Popup>

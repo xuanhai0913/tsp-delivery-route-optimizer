@@ -63,6 +63,7 @@ export const astar = (
   const gScores = new Map<number, number>();
   const fScores = new Map<number, number>();
   const previous = new Map<number, number>();
+  // hàng đợi ưu tiên
   const queue = new MinPriorityQueue<QueueNode>();
 
   gScores.set(startId, 0);
