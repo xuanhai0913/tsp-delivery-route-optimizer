@@ -37,7 +37,7 @@ function isGraphEdge(value: unknown): value is GraphEdge {
     Number.isInteger(edge.from) &&
     Number.isInteger(edge.to) &&
     isFiniteNumber(edge.weight) &&
-    edge.weight >= 0 &&
+    //edge.weight >= 0 &&
     (edge.label === undefined || typeof edge.label === "string") &&
     hasValidGeometry
   );
