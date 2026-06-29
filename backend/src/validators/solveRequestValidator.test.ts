@@ -48,6 +48,12 @@ describe("validateSolveRequest", () => {
 
     expect(issues.some((issue) => issue.code === "source-not-found")).toBe(true);
     expect(issues.some((issue) => issue.code === "target-not-found")).toBe(true);
-    //expect(issues.some((issue) => issue.code === "edge-invalid")).toBe(true);
+    expect(
+  issues.some(
+    (issue) =>
+      issue.code === "edge-invalid" ||
+      issue.code === "edge-node-not-found"
+  )
+).toBe(true);
   });
 });
