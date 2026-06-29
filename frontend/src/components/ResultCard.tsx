@@ -1,5 +1,6 @@
+import type { CSSProperties } from "react";
 import type { AlgorithmKey, GraphNode, SolveResult } from "../types/path";
-import { getResultLabel } from "../utils/route";
+import { getAlgorithmConfig } from "../data/algorithms";
 import { RouteChipList } from "./RouteChipList";
 
 type ResultCardProps = {
@@ -25,20 +26,21 @@ export function ResultCard({
   isPlaybackTarget,
   onSelectPlayback,
 }: ResultCardProps) {
-  const title = getResultLabel(algorithm);
-  const tone = algorithm === "dijkstra" ? "greedy" : "branch";
+  const config = getAlgorithmConfig(algorithm);
+  const title = config.label;
   const canSelect = Boolean(result && onSelectPlayback);
 
   return (
     <button
       className={[
         "result-card",
-        tone,
+        algorithm,
         isLoading ? "loading" : "",
         isPlaybackTarget ? "playback-target" : "",
       ].join(" ")}
       type="button"
       disabled={!canSelect}
+      style={{ "--algo-color": config.color } as CSSProperties}
       onClick={() => {
         if (canSelect) {
           onSelectPlayback?.(algorithm);
@@ -46,8 +48,10 @@ export function ResultCard({
       }}
     >
       <div className="result-header">
+        <span className="result-dot" aria-hidden="true" />
         <h3>{title}</h3>
-        <span>{isLoading ? "Đang chạy" : result ? "Hoàn thành" : "Chưa chạy"}</span>
+        <span className="result-tag">{config.complexity}</span>
+        <span className="result-status">{isLoading ? "Đang chạy" : result ? "Hoàn thành" : "Chưa chạy"}</span>
       </div>
 
       {badges.length > 0 && result ? (

@@ -9,6 +9,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet/dist/leaflet.css";
 import type {
   AlgorithmKey,
   Coordinate,
@@ -17,6 +18,7 @@ import type {
   RoutePlaybackSnapshot,
   SolverState,
 } from "../types/path";
+import { ALGORITHM_KEYS, getAlgorithmColor } from "../data/algorithms";
 import { edgeToCoordinates, findEdge, pathToCoordinates } from "../utils/route";
 import {
   partialSegmentCoordinates,
@@ -84,9 +86,9 @@ function polylineOptions(
   algorithm: AlgorithmKey,
   variant: "context" | "completed" | "current",
 ) {
+  const color = getAlgorithmColor(algorithm);
   const isDijkstra = algorithm === "dijkstra";
-  const color = isDijkstra ? "#2563eb" : "#7c3aed";
-  const baseDash = isDijkstra ? undefined : "9 7";
+  const baseDash = isDijkstra ? undefined : algorithm === "aStar" ? "9 7" : "2 9";
 
   if (variant === "context") {
     return {
@@ -178,31 +180,18 @@ export default function RouteMap({
   );
 
   const pathLines = useMemo(
-    () => ({
-      dijkstra: results.dijkstra
-        ? pathToCoordinates(
-            results.dijkstra.path,
-            dataset.nodes,
-            dataset.edges,
-            dataset.directed,
-          )
-        : [],
-      aStar: results.aStar
-        ? pathToCoordinates(
-            results.aStar.path,
-            dataset.nodes,
-            dataset.edges,
-            dataset.directed,
-          )
-        : [],
-    }),
-    [
-      dataset.directed,
-      dataset.edges,
-      dataset.nodes,
-      results.aStar,
-      results.dijkstra,
-    ],
+    () =>
+      ALGORITHM_KEYS.reduce(
+        (accumulator, key) => {
+          const result = results[key];
+          accumulator[key] = result
+            ? pathToCoordinates(result.path, dataset.nodes, dataset.edges, dataset.directed)
+            : [];
+          return accumulator;
+        },
+        {} as Record<AlgorithmKey, Coordinate[]>
+      ),
+    [dataset.directed, dataset.edges, dataset.nodes, results]
   );
 
   const activePathLine = useMemo(
@@ -346,7 +335,7 @@ export default function RouteMap({
               key={`relaxed-${index}`}
               positions={line}
               pathOptions={{
-                color: activeRoute === "dijkstra" ? "#2563eb" : "#0f766e",
+                color: getAlgorithmColor(activeRoute),
                 weight: 4.5,
                 opacity: 0.36,
                 dashArray: activeRoute === "dijkstra" ? "7 8" : "4 7",
@@ -356,13 +345,12 @@ export default function RouteMap({
           ))
         : null}
 
-      {(["dijkstra", "aStar"] as AlgorithmKey[]).map((algorithm) => {
+      {ALGORITHM_KEYS.map((algorithm) => {
         if (!visibleRoutes[algorithm]) {
           return null;
         }
 
-        const routeLine =
-          algorithm === "dijkstra" ? pathLines.dijkstra : pathLines.aStar;
+        const routeLine = pathLines[algorithm];
         if (routeLine.length === 0) {
           return null;
         }

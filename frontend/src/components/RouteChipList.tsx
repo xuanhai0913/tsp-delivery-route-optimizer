@@ -25,7 +25,7 @@ export function RouteChipList({ path, nodes, algorithm, activeStep, activeNodeId
           <span
             className={[
               "route-chip",
-              algorithm === "dijkstra" ? "dijkstra" : "astar",
+              algorithm,
               isPlaybackTarget && index < activeNodeIndex ? "visited" : "",
               isPlaybackTarget && index === activeNodeIndex ? "active" : "",
             ].join(" ")}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AlgorithmKey, AlgorithmTraceStep, Dataset, PathSegment, RoutePlaybackSnapshot, SolverState } from "../types/path";
+import { ALGORITHM_KEYS } from "../data/algorithms";
 import { edgeToCoordinates, findEdge } from "../utils/route";
 import { buildPathSegments, interpolatePolylineCoordinate } from "../utils/routeAnimation";
 
@@ -19,19 +20,26 @@ type PlaybackState = {
   segmentProgress: number;
 };
 
+function hasAnyResult(results: SolverState): boolean {
+  return ALGORITHM_KEYS.some((key) => Boolean(results[key]));
+}
+
 function getPreferredAlgorithm(results: SolverState): AlgorithmKey {
   if (results.aStar) {
     return "aStar";
   }
 
-  return "dijkstra";
+  if (results.dijkstra) {
+    return "dijkstra";
+  }
+
+  return ALGORITHM_KEYS.find((key) => Boolean(results[key])) ?? "dijkstra";
 }
 
 function getPathSignature(results: SolverState): string {
-  return [
-    `${results.dijkstra?.path.join("-") ?? "none"}:${results.dijkstra?.traceSteps?.length ?? 0}`,
-    `${results.aStar?.path.join("-") ?? "none"}:${results.aStar?.traceSteps?.length ?? 0}`,
-  ].join("|");
+  return ALGORITHM_KEYS.map(
+    (key) => `${results[key]?.path.join("-") ?? "none"}:${results[key]?.traceSteps?.length ?? 0}`
+  ).join("|");
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -84,7 +92,7 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
   }, [playbackState]);
 
   useEffect(() => {
-    if (!results.dijkstra && !results.aStar) {
+    if (!hasAnyResult(results)) {
       setIsPlaying(false);
       setPlaybackState({ activeStep: 0, segmentProgress: 0 });
       return;
@@ -275,10 +283,13 @@ export function useRoutePlayback({ dataset, results }: RoutePlaybackParams) {
   ]);
 
   return {
-    availableAlgorithms: {
-      dijkstra: Boolean(results.dijkstra),
-      aStar: Boolean(results.aStar),
-    },
+    availableAlgorithms: ALGORITHM_KEYS.reduce(
+      (accumulator, key) => {
+        accumulator[key] = Boolean(results[key]);
+        return accumulator;
+      },
+      {} as Record<AlgorithmKey, boolean>
+    ),
     selectedAlgorithm,
     setSelectedAlgorithm,
     isPlaying,

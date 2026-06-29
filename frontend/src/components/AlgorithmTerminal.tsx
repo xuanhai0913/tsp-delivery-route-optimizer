@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Terminal, Trash2 } from "lucide-react";
 import type { TerminalLogEntry } from "../types/path";
+import { TerminalArtBackground } from "./TerminalArtBackground";
 
 type AlgorithmTerminalProps = {
   logs: TerminalLogEntry[];
   onClear: () => void;
+  artMode?: "idle" | "running";
+  artColor?: string;
 };
 
-export function AlgorithmTerminal({ logs, onClear }: AlgorithmTerminalProps) {
+export function AlgorithmTerminal({ logs, onClear, artMode = "idle", artColor = "#06b6d4" }: AlgorithmTerminalProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -19,8 +22,12 @@ export function AlgorithmTerminal({ logs, onClear }: AlgorithmTerminalProps) {
 
   return (
     <section className={`algorithm-terminal ${isCollapsed ? "collapsed" : ""}`} aria-label="Thuật toán terminal">
+      {!isCollapsed ? <TerminalArtBackground mode={artMode} color={artColor} /> : null}
       <div className="terminal-head">
         <div>
+          <span className="term-dot red" aria-hidden="true" />
+          <span className="term-dot yellow" aria-hidden="true" />
+          <span className="term-dot green" aria-hidden="true" />
           <Terminal size={16} />
           <span>Algorithm terminal</span>
         </div>

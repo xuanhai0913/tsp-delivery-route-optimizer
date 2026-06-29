@@ -8,12 +8,15 @@ import type {
   SolveRequest,
   SolveResult,
 } from "../types/path";
-import { calculatePathCost } from "../utils/route";
+import { calculatePathCost, findEdge } from "../utils/route";
 import { validateSolveRequest } from "../utils/validation";
 import { fetchApiJson, isMockFallbackEnabled } from "./apiConfig";
 
 const DIJKSTRA_MIN_RUNTIME_MS = 8.4;
 const A_STAR_MIN_RUNTIME_MS = 5.7;
+const FLOYD_WARSHALL_MIN_RUNTIME_MS = 6.9;
+
+type SolveEndpoint = "/api/solve/dijkstra" | "/api/solve/a-star" | "/api/solve/floyd-warshall";
 
 type Neighbor = {
   node: number;
@@ -55,7 +58,7 @@ function isSolveResult(value: unknown): value is SolveResult {
     hasValidTraceSteps;
 }
 
-async function postSolve(endpoint: "/api/solve/dijkstra" | "/api/solve/a-star", request: SolveRequest): Promise<SolveResult> {
+async function postSolve(endpoint: SolveEndpoint, request: SolveRequest): Promise<SolveResult> {
   const result = await fetchApiJson<unknown>(endpoint, {
     method: "POST",
     headers: {
@@ -494,6 +497,193 @@ function solveAStarMock(request: SolveRequest): SolveResult {
   };
 }
 
+function solveFloydWarshallMock(request: SolveRequest): SolveResult {
+  const startedAt = performance.now();
+  const directed = request.directed ?? false;
+  const nodeIds = request.nodes.map((node) => node.id);
+  const indexByNode = new Map(nodeIds.map((node, index) => [node, index]));
+  const size = nodeIds.length;
+  const distances = Array.from({ length: size }, () => Array<number>(size).fill(Number.POSITIVE_INFINITY));
+  const next = Array.from({ length: size }, () => Array<number | undefined>(size).fill(undefined));
+  const traceSteps: AlgorithmTraceStep[] = [];
+  const relaxedEdges: SolveResult["relaxedEdges"] = [];
+  const visitedOrder: number[] = [];
+
+  for (let index = 0; index < size; index += 1) {
+    distances[index][index] = 0;
+    next[index][index] = index;
+  }
+
+  for (const edge of request.edges) {
+    const fromIndex = indexByNode.get(edge.from);
+    const toIndex = indexByNode.get(edge.to);
+    if (fromIndex === undefined || toIndex === undefined) {
+      continue;
+    }
+
+    if (edge.weight < distances[fromIndex][toIndex]) {
+      distances[fromIndex][toIndex] = edge.weight;
+      next[fromIndex][toIndex] = toIndex;
+    }
+
+    if (!directed && edge.weight < distances[toIndex][fromIndex]) {
+      distances[toIndex][fromIndex] = edge.weight;
+      next[toIndex][fromIndex] = fromIndex;
+    }
+  }
+
+  const sourceIndex = indexByNode.get(request.source);
+  const targetIndex = indexByNode.get(request.target);
+
+  const reconstruct = (from: number, to: number): number[] => {
+    const fromIndex = indexByNode.get(from);
+    const toIndex = indexByNode.get(to);
+    if (fromIndex === undefined || toIndex === undefined || next[fromIndex][toIndex] === undefined) {
+      return [];
+    }
+
+    const path = [from];
+    let current = fromIndex;
+    while (current !== toIndex) {
+      const nextIndex = next[current][toIndex];
+      if (nextIndex === undefined) {
+        return [];
+      }
+      current = nextIndex;
+      path.push(nodeIds[current]);
+      if (path.length > size + 1) {
+        return [];
+      }
+    }
+
+    return path;
+  };
+
+  const sourceDistances = (): Map<number, number> =>
+    new Map(
+      nodeIds.map((node, index) => [
+        node,
+        sourceIndex === undefined ? Number.POSITIVE_INFINITY : distances[sourceIndex][index],
+      ])
+    );
+
+  const previousFromMatrix = (): Map<number, number> => {
+    const previous = new Map<number, number>();
+    if (sourceIndex === undefined) {
+      return previous;
+    }
+    for (const node of nodeIds) {
+      const path = reconstruct(request.source, node);
+      for (let index = 1; index < path.length; index += 1) {
+        previous.set(path[index], path[index - 1]);
+      }
+    }
+    return previous;
+  };
+
+  const buildFloydNodeMetrics = (currentNode?: number, path: number[] = []): AlgorithmTraceStep["nodes"] => {
+    const distancesFromSource = sourceDistances();
+    const previous = previousFromMatrix();
+    const pathSet = new Set(path);
+    const orderedNodeIds = path.length > 0 ? [...path, ...nodeIds.filter((node) => !pathSet.has(node))] : nodeIds;
+
+    return orderedNodeIds.map((node) => {
+      const distance = distancesFromSource.get(node) ?? Number.POSITIVE_INFINITY;
+      const status: NodeMetric["status"] = pathSet.has(node)
+        ? "path"
+        : currentNode === node
+          ? "current"
+          : node === request.source || node === request.target
+            ? "queued"
+            : Number.isFinite(distance)
+              ? "visited"
+              : "unvisited";
+
+      return {
+        node,
+        status,
+        distance: Number.isFinite(distance) ? Number(distance.toFixed(2)) : undefined,
+        previous: previous.get(node),
+      };
+    });
+  };
+
+  pushTraceStep(traceSteps, {
+    phase: "select-current",
+    currentNode: request.source,
+    queue: [],
+    nodes: buildFloydNodeMetrics(request.source),
+    message: "Floyd-Warshall khởi tạo ma trận khoảng cách mọi cặp node.",
+  });
+
+  for (let k = 0; k < size; k += 1) {
+    const viaNode = nodeIds[k];
+    visitedOrder.push(viaNode);
+
+    for (let i = 0; i < size; i += 1) {
+      for (let j = 0; j < size; j += 1) {
+        const candidate = distances[i][k] + distances[k][j];
+        if (candidate < distances[i][j]) {
+          distances[i][j] = candidate;
+          next[i][j] = next[i][k];
+
+          if (i === sourceIndex) {
+            const matrixTo = nodeIds[j];
+            const cumulativeCost = Number(candidate.toFixed(2));
+            const sourcePath = reconstruct(request.source, matrixTo);
+            const relaxedFrom = sourcePath.length >= 2 ? sourcePath[sourcePath.length - 2] : viaNode;
+            const relaxedTo = sourcePath.length >= 2 ? sourcePath[sourcePath.length - 1] : matrixTo;
+            const relaxedGraphEdge = findEdge(relaxedFrom, relaxedTo, request.edges, directed);
+            const relaxedWeight = relaxedGraphEdge?.weight ?? Number(distances[k][j].toFixed(2));
+
+            relaxedEdges.push({ from: nodeIds[i], to: matrixTo, cumulativeCost });
+            pushTraceStep(traceSteps, {
+              phase: "relax-edge",
+              currentNode: viaNode,
+              relaxedEdge: {
+                id: relaxedGraphEdge?.id,
+                from: relaxedFrom,
+                to: relaxedTo,
+                weight: relaxedWeight,
+                cumulativeCost,
+              },
+              queue: [],
+              nodes: buildFloydNodeMetrics(viaNode),
+              message: `Dùng node ${viaNode} làm trung gian: cập nhật dist[${nodeIds[i]}][${matrixTo}] = ${cumulativeCost}.`,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  const path =
+    sourceIndex === undefined || targetIndex === undefined ? [] : reconstruct(request.source, request.target);
+  const totalCost = calculatePathCost(path, request.edges, directed);
+
+  pushTraceStep(traceSteps, {
+    phase: "final-path",
+    currentNode: path.length > 0 ? request.target : undefined,
+    queue: [],
+    nodes: buildFloydNodeMetrics(path.length > 0 ? request.target : undefined, path),
+    message:
+      path.length > 0
+        ? `Floyd-Warshall dựng path ${request.source} → ${request.target}: ${path.join(" → ")}.`
+        : `Không tìm thấy đường đi từ ${request.source} đến ${request.target}.`,
+  });
+
+  const elapsed = performance.now() - startedAt;
+  return {
+    path,
+    totalCost,
+    runtimeMs: Number(Math.max(elapsed, FLOYD_WARSHALL_MIN_RUNTIME_MS).toFixed(2)),
+    resultSource: "mock",
+    visitedOrder,
+    relaxedEdges,
+    traceSteps,
+  };
+}
+
 export const mockSolverClient = {
   async solveDijkstra(request: SolveRequest): Promise<SolveResult> {
     assertValidRequest(request);
@@ -506,11 +696,17 @@ export const mockSolverClient = {
     await delay(430);
     return solveAStarMock(request);
   },
+
+  async solveFloydWarshall(request: SolveRequest): Promise<SolveResult> {
+    assertValidRequest(request);
+    await delay(470);
+    return solveFloydWarshallMock(request);
+  },
 };
 
 async function solveWithFallback(
   request: SolveRequest,
-  endpoint: "/api/solve/dijkstra" | "/api/solve/a-star",
+  endpoint: SolveEndpoint,
   fallback: () => Promise<SolveResult>,
 ): Promise<SolveResult> {
   assertValidRequest(request);
@@ -533,5 +729,9 @@ export const solverClient = {
 
   solveAStar(request: SolveRequest): Promise<SolveResult> {
     return solveWithFallback(request, "/api/solve/a-star", () => mockSolverClient.solveAStar(request));
+  },
+
+  solveFloydWarshall(request: SolveRequest): Promise<SolveResult> {
+    return solveWithFallback(request, "/api/solve/floyd-warshall", () => mockSolverClient.solveFloydWarshall(request));
   },
 };

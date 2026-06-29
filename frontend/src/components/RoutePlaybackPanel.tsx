@@ -7,6 +7,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot } from "../types/path";
+import { ALGORITHMS } from "../data/algorithms";
 import { getResultLabel } from "../utils/route";
 
 type RoutePlaybackPanelProps = {
@@ -76,16 +77,16 @@ export function RoutePlaybackPanel({
         </div>
 
         <div className="playback-algorithms" role="group" aria-label="Chọn thuật toán playback">
-          {(["dijkstra", "aStar"] as AlgorithmKey[]).map((algorithm) => (
+          {ALGORITHMS.map(({ key, shortLabel }) => (
             <button
-              key={algorithm}
+              key={key}
               type="button"
-              disabled={!availableAlgorithms[algorithm]}
-              className={selectedAlgorithm === algorithm ? `active ${algorithm}` : ""}
-              onClick={() => onAlgorithmChange(algorithm)}
+              disabled={!availableAlgorithms[key]}
+              className={selectedAlgorithm === key ? `active ${key}` : ""}
+              onClick={() => onAlgorithmChange(key)}
             >
-              <span className={`algorithm-dot ${algorithm}`} />
-              {algorithm === "dijkstra" ? "Dijkstra" : "A*"}
+              <span className={`algorithm-dot ${key}`} />
+              {shortLabel}
             </button>
           ))}
         </div>

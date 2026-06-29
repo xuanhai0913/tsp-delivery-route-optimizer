@@ -1,4 +1,5 @@
 import type { AlgorithmKey, ComparisonRow, Coordinate, GraphEdge, GraphNode, SolveResult } from "../types/path";
+import { getAlgorithmConfig, getAlgorithmLabel } from "../data/algorithms";
 
 export function findEdge(from: number, to: number, edges: GraphEdge[], directed = false): GraphEdge | undefined {
   return edges.find(
@@ -106,7 +107,7 @@ export function pathToLabel(path: number[]): string {
 }
 
 export function getResultLabel(algorithm: AlgorithmKey): string {
-  return algorithm === "dijkstra" ? "Dijkstra" : "A*";
+  return getAlgorithmLabel(algorithm);
 }
 
 export function buildComparisonRows(results: Partial<Record<AlgorithmKey, SolveResult>>): ComparisonRow[] {
@@ -122,15 +123,12 @@ export function buildComparisonRows(results: Partial<Record<AlgorithmKey, SolveR
 
   return entries.map(([algorithm, result]) => ({
     algorithm,
-    name: getResultLabel(algorithm),
+    name: getAlgorithmLabel(algorithm),
     path: result.path,
     totalCost: result.totalCost,
     runtimeMs: result.runtimeMs,
     visitedCount: result.visitedOrder?.length ?? result.path.length,
-    note:
-      algorithm === "dijkstra"
-        ? "Duyệt chắc chắn với trọng số không âm, phù hợp làm baseline tối ưu."
-        : "Dùng heuristic tọa độ để ưu tiên hướng gần đích, thường duyệt ít node hơn.",
+    note: getAlgorithmConfig(algorithm).note,
     isBestCost: result.totalCost === bestCost,
     isFastest: result.runtimeMs === fastestRuntime,
   }));

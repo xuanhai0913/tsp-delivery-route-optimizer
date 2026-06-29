@@ -5,8 +5,6 @@ import {
   Download,
   Map,
   RefreshCcw,
-  Settings,
-  SlidersHorizontal,
   Table2,
   Upload,
 } from "lucide-react";
@@ -39,13 +37,19 @@ export function AppShell({
   onExportPng,
 }: AppShellProps) {
   return (
-    <div className="app-shell">
-      <header className="topbar">
+    <div className="app-shell routelab-shell">
+      <header className="topbar routelab-topbar">
         <button className="top-brand" type="button" onClick={() => onNavigate("dashboard")}>
-          <img className="brand-mark" src="/brand/logo-mark.svg" alt="" aria-hidden="true" />
+          <svg className="brand-mark-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="5" cy="19" r="2" />
+            <circle cx="19" cy="19" r="2" />
+            <path d="M12 7L5 17M12 7l7 10M5 19l14 0" />
+          </svg>
           <span className="top-brand-copy">
-            <p className="brand-title">RouteLab Group 1</p>
-            <p className="brand-subtitle">Shortest Path Lab</p>
+            <p className="brand-title">
+              Route<span className="brand-accent">Lab</span>
+            </p>
           </span>
         </button>
 
@@ -63,24 +67,17 @@ export function AppShell({
         </nav>
 
         <div className="top-actions">
-          <button className="secondary-button" type="button" onClick={onExportJson}>
-            <Upload size={17} />
-            Tải dữ liệu
+          <button className="icon-button" type="button" onClick={onExportJson} aria-label="Xuất JSON" title="Xuất JSON">
+            <Upload size={18} />
           </button>
-          <button className="solid-button" type="button" onClick={onExportPng}>
-            <Download size={17} />
-            Xuất kết quả
+          <button className="icon-button" type="button" onClick={onExportPng} aria-label="Xuất PNG" title="Xuất PNG">
+            <Download size={18} />
           </button>
           <span className="action-divider" aria-hidden="true" />
-          <button className="icon-button" type="button" onClick={onReset} aria-label="Reset kết quả">
-            <RefreshCcw size={20} />
+          <button className="icon-button" type="button" onClick={onReset} aria-label="Reset kết quả" title="Reset">
+            <RefreshCcw size={18} />
           </button>
-          <button className="icon-button" type="button" aria-label="Cài đặt">
-            <Settings size={21} />
-          </button>
-          <button className="icon-button" type="button" aria-label="Trợ giúp">
-            <SlidersHorizontal size={20} />
-          </button>
+          <span className="run-badge">· thuật toán đường đi</span>
         </div>
       </header>
 

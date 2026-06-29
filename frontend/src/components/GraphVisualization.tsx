@@ -1,4 +1,5 @@
 import type { AlgorithmKey, Dataset, RoutePlaybackSnapshot, SolverState } from "../types/path";
+import { ALGORITHMS } from "../data/algorithms";
 
 type GraphVisualizationProps = {
   dataset: Dataset;
@@ -26,10 +27,11 @@ function pathSegments(path: number[]) {
 }
 
 export function GraphVisualization({ dataset, results, visibleRoutes, playback }: GraphVisualizationProps) {
-  const routes = [
-    { key: "dijkstra" as const, result: results.dijkstra, visible: visibleRoutes.dijkstra },
-    { key: "aStar" as const, result: results.aStar, visible: visibleRoutes.aStar },
-  ];
+  const routes = ALGORITHMS.map(({ key }) => ({
+    key,
+    result: results[key],
+    visible: visibleRoutes[key],
+  }));
   const currentTraceStep = playback?.currentTraceStep;
   const completedRelaxedKeys = new Set(
     playback?.completedTraceSteps
@@ -147,8 +149,11 @@ export function GraphVisualization({ dataset, results, visibleRoutes, playback }
         })}
       </svg>
       <div className="graph-legend" aria-hidden="true">
-        <span><i className="legend-line dijkstra" /> Dijkstra</span>
-        <span><i className="legend-line astar" /> A*</span>
+        {ALGORITHMS.map(({ key, shortLabel }) => (
+          <span key={key}>
+            <i className={`legend-line ${key}`} /> {shortLabel}
+          </span>
+        ))}
       </div>
     </div>
   );

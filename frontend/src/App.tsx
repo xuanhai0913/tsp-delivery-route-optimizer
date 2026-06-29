@@ -5,10 +5,11 @@ import { DataPage } from "./pages/DataPage";
 import { GuidePage } from "./pages/GuidePage";
 import { ReportPage } from "./pages/ReportPage";
 import { mockDatasets } from "./data/mockDatasets";
+import { ALGORITHM_KEYS, getAlgorithmConfig } from "./data/algorithms";
 import { defaultRoadScenario, roadScenarios } from "./data/roadScenarios";
 import { datasetClient } from "./services/datasetClient";
 import { solverClient } from "./services/solverClient";
-import type { AlgorithmKey, Dataset, RoadScenarioKey, SolverState, TerminalLogEntry, TerminalLogTone } from "./types/path";
+import type { AlgorithmKey, Dataset, RoadScenarioKey, SolveRequest, SolveResult, SolverState, TerminalLogEntry, TerminalLogTone } from "./types/path";
 import { downloadJson, exportElementToPng } from "./utils/export";
 import { applyRoadScenario, getScenarioAffectedEdgeIds } from "./utils/roadScenarios";
 import { hasBlockingIssue, validateDataset } from "./utils/validation";
@@ -30,8 +31,17 @@ function createTerminalLog(tone: TerminalLogTone, message: string): TerminalLogE
   };
 }
 
-function algorithmLabel(algorithm: AlgorithmKey): string {
-  return algorithm === "dijkstra" ? "Dijkstra" : "A*";
+function solveWith(algorithm: AlgorithmKey, request: SolveRequest): Promise<SolveResult> {
+  switch (algorithm) {
+    case "dijkstra":
+      return solverClient.solveDijkstra(request);
+    case "aStar":
+      return solverClient.solveAStar(request);
+    case "floydWarshall":
+      return solverClient.solveFloydWarshall(request);
+    default:
+      return solverClient.solveDijkstra(request);
+  }
 }
 
 function formatPath(path: number[]): string {
@@ -151,7 +161,7 @@ export default function App() {
     setTarget(nextDataset.defaultTarget);
     setSelectedScenarioKey(defaultRoadScenario.key);
     setResults({});
-    setStatusMessage("Đã áp dụng graph mới. Có thể chạy Dijkstra hoặc A*.");
+    setStatusMessage("Đã áp dụng graph mới. Có thể chạy Dijkstra, A* hoặc Floyd-Warshall.");
     appendTerminalLog("info", `Dataset selected: ${nextDataset.name}`);
     switchView("dashboard");
   };
@@ -191,25 +201,23 @@ export default function App() {
     }
 
     const request = buildRequest();
+    const config = getAlgorithmConfig(algorithm);
     setSolving((current) => ({ ...current, [algorithm]: true }));
-    setStatusMessage(algorithm === "dijkstra" ? "Đang gọi backend Dijkstra..." : "Đang gọi backend A*...");
-    appendTerminalLog("command", `> POST /api/solve/${algorithm === "dijkstra" ? "dijkstra" : "a-star"}`);
+    setStatusMessage(`Đang gọi backend ${config.label}...`);
+    appendTerminalLog("command", `> POST ${config.endpoint}`);
 
     try {
-      const result =
-        algorithm === "dijkstra"
-          ? await solverClient.solveDijkstra(request)
-          : await solverClient.solveAStar(request);
+      const result = await solveWith(algorithm, request);
       setResults((current) => ({ ...current, [algorithm]: result }));
-      appendTerminalLog("success", `✓ ${algorithmLabel(algorithm)} trace: ${result.traceSteps?.length ?? 0} steps`);
+      appendTerminalLog("success", `✓ ${config.label} trace: ${result.traceSteps?.length ?? 0} steps`);
       appendTerminalLog("success", `✓ path: ${formatPath(result.path)}, cost ${result.totalCost}`);
       if (result.resultSource === "mock") {
         appendTerminalLog("warning", "⚠ fallback local mock");
       }
       setStatusMessage(
         result.resultSource === "mock"
-          ? `${algorithm === "dijkstra" ? "Dijkstra" : "A*"} dùng fallback mock local.`
-          : `Đã nhận kết quả ${algorithm === "dijkstra" ? "Dijkstra" : "A*"} từ backend.`
+          ? `${config.label} dùng fallback mock local.`
+          : `Đã nhận kết quả ${config.label} từ backend.`
       );
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Không thể chạy thuật toán.");
@@ -226,34 +234,56 @@ export default function App() {
     }
 
     const request = buildRequest();
-    setSolving({ dijkstra: true, aStar: true });
-    setStatusMessage("Đang gọi backend Dijkstra và A* để so sánh...");
-    appendTerminalLog("command", "> POST /api/solve/dijkstra");
-    appendTerminalLog("command", "> POST /api/solve/a-star");
+    setSolving(ALGORITHM_KEYS.reduce((accumulator, key) => ({ ...accumulator, [key]: true }), {}));
+    setStatusMessage("Đang gọi backend cho cả 3 thuật toán để so sánh...");
+    for (const key of ALGORITHM_KEYS) {
+      appendTerminalLog("command", `> POST ${getAlgorithmConfig(key).endpoint}`);
+    }
 
     try {
-      const [dijkstra, aStar] = await Promise.all([
-        solverClient.solveDijkstra(request),
-        solverClient.solveAStar(request),
-      ]);
-      setResults({ dijkstra, aStar });
-      appendTerminalLog("success", `✓ Dijkstra trace: ${dijkstra.traceSteps?.length ?? 0} steps`);
-      appendTerminalLog("success", `✓ path: ${formatPath(dijkstra.path)}, cost ${dijkstra.totalCost}`);
-      appendTerminalLog("success", `✓ A* trace: ${aStar.traceSteps?.length ?? 0} steps`);
-      appendTerminalLog("success", `✓ path: ${formatPath(aStar.path)}, cost ${aStar.totalCost}`);
-      if (dijkstra.resultSource === "mock" || aStar.resultSource === "mock") {
+      const settled = await Promise.all(
+        ALGORITHM_KEYS.map((key) =>
+          solveWith(key, request)
+            .then((result) => ({ key, result }))
+            .catch((error: unknown) => ({ key, error }))
+        )
+      );
+
+      const nextResults: SolverState = {};
+      let usedMock = false;
+      let failureMessage: string | undefined;
+
+      for (const outcome of settled) {
+        const config = getAlgorithmConfig(outcome.key);
+        if ("result" in outcome) {
+          nextResults[outcome.key] = outcome.result;
+          appendTerminalLog("success", `✓ ${config.label} trace: ${outcome.result.traceSteps?.length ?? 0} steps`);
+          appendTerminalLog("success", `✓ path: ${formatPath(outcome.result.path)}, cost ${outcome.result.totalCost}`);
+          if (outcome.result.resultSource === "mock") {
+            usedMock = true;
+          }
+        } else {
+          failureMessage = outcome.error instanceof Error ? outcome.error.message : "Không thể chạy thuật toán.";
+          appendTerminalLog("error", `✗ ${config.label}: ${failureMessage}`);
+        }
+      }
+
+      setResults(nextResults);
+      if (usedMock) {
         appendTerminalLog("warning", "⚠ fallback local mock");
       }
       setStatusMessage(
-        dijkstra.resultSource === "mock" || aStar.resultSource === "mock"
-          ? "Backend tạm thời chậm, đã dùng fallback mock local để so sánh."
-          : "Đã nhận kết quả so sánh shortest path từ backend."
+        failureMessage
+          ? `Một vài thuật toán lỗi: ${failureMessage}`
+          : usedMock
+            ? "Backend tạm thời chậm, đã dùng fallback mock local để so sánh."
+            : "Đã nhận kết quả so sánh shortest path từ backend."
       );
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Không thể chạy thuật toán.");
       appendTerminalLog("error", error instanceof Error ? error.message : "Không thể chạy thuật toán.");
     } finally {
-      setSolving({ dijkstra: false, aStar: false });
+      setSolving({});
     }
   };
 
@@ -320,9 +350,8 @@ export default function App() {
             onSourceChange={changeSource}
             onTargetChange={changeTarget}
             onScenarioChange={changeScenario}
-            onRunDijkstra={() => runAlgorithm("dijkstra")}
-            onRunAStar={() => runAlgorithm("aStar")}
-            onRunBoth={runBoth}
+            onRunAlgorithm={runAlgorithm}
+            onRunAll={runBoth}
             onResetResults={resetResults}
             onClearTerminal={() => setTerminalLogs([])}
           />
