@@ -1,4 +1,4 @@
-export type AlgorithmKey = "dijkstra" | "aStar" | "floydWarshall";
+export type AlgorithmKey = "dijkstra" | "aStar" | "floydWarshall" | "bellmanFord";
 
 export type GeoPoint = {
   lat: number;

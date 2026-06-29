@@ -120,6 +120,54 @@ describe("backend HTTP API", () => {
     ).toBe(true);
   });
 
+  it("solves Bellman-Ford shortest-path requests with relaxation rounds", async () => {
+    const response = await request(app)
+      .post("/api/solve/bellman-ford")
+      .send(graphRequest)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      path: [0, 1, 2],
+      totalCost: 9
+    });
+    expect(response.body.runtimeMs).toEqual(expect.any(Number));
+    expect(response.body.visitedOrder).toEqual([0, 1, 2]);
+    expect(response.body.traceSteps.at(-1)).toMatchObject({
+      phase: "final-path",
+      currentNode: 2
+    });
+    expect(
+      response.body.traceSteps.some((step: { phase: string }) => step.phase === "relax-edge")
+    ).toBe(true);
+    expect(response.body.relaxedEdges).toBeInstanceOf(Array);
+    expect(response.body.relaxedEdges.length).toBeGreaterThan(0);
+  });
+
+  it("detects negative cycle in Bellman-Ford solver", async () => {
+    const negativeCycleRequest = {
+      source: 0,
+      target: 2,
+      directed: true, 
+      nodes: [
+        { id: 0, name: "A", lat: 0, lng: 0 },
+        { id: 1, name: "B", lat: 0, lng: 0 },
+        { id: 2, name: "C", lat: 0, lng: 0 }
+      ],
+      edges: [
+        { from: 0, to: 1, weight: 1 },
+        { from: 1, to: 2, weight: -2 },
+        { from: 2, to: 0, weight: -1 } 
+      ]
+    };
+
+    const response = await request(app)
+      .post("/api/solve/bellman-ford")
+      .send(negativeCycleRequest)
+      .expect(400);
+
+    expect(response.body.error).toMatch(/negative[- ]?cycle/i);
+  });
+
   it("rejects invalid shortest-path solve requests", async () => {
     const response = await request(app)
       .post("/api/solve/a-star")

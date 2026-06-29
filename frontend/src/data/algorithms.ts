@@ -1,6 +1,6 @@
 import type { AlgorithmKey } from "../types/path";
 
-export type SolveEndpoint = "/api/solve/dijkstra" | "/api/solve/a-star" | "/api/solve/floyd-warshall";
+export type SolveEndpoint = "/api/solve/dijkstra" | "/api/solve/a-star" | "/api/solve/floyd-warshall" | "/api/solve/bellman-ford";
 
 export type AlgorithmConfig = {
   key: AlgorithmKey;
@@ -53,6 +53,15 @@ export const ALGORITHMS: AlgorithmConfig[] = [
     endpoint: "/api/solve/floyd-warshall",
     note: "Quy hoạch động tìm shortest path mọi cặp node, tốn O(V³) nhưng cho toàn bộ ma trận.",
   },
+  {
+    key: "bellmanFord",
+    label: "Bellman-Ford",
+    shortLabel: "Bellman",
+    complexity: "O(VE)",
+    color: "#ef4444",
+    endpoint: "/api/solve/bellman-ford",
+    note: "Xử lý trọng số âm và phát hiện chu trình âm, phù hợp đồ thị có cạnh âm.", 
+  }
 ];
 
 export const ALGORITHM_KEYS: AlgorithmKey[] = ALGORITHMS.map((item) => item.key);
