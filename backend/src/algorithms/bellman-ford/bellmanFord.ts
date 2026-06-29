@@ -8,7 +8,7 @@ import { calculatePathCost } from "../../utils/route.js";
 export class NegativeCycleError extends Error {
   status = 400;
   constructor(public nodeId: number) {
-    super(`Bellman-Ford phát hiện chu trình âm liên quan đến node ${nodeId}.`);
+    super(`Bellman-Ford detected a negative cycle involving node ${nodeId}.`);
     this.name = "NegativeCycleError";
   }
 }
@@ -137,7 +137,8 @@ export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
   distances.set(source, 0);
 
   const relaxedEdges: NonNullable<PathSolveResult["relaxedEdges"]> = [];
-  const visitedOrder: number[] = [];
+  const visitedOrder: number[] = [source];
+  const visitedSet = new Set<number>([source]);
   const traceSteps: NonNullable<PathSolveResult["traceSteps"]> = [];
 
   // --- 7b. Vòng lặp chính: lặp |V| - 1 lần ---
@@ -167,6 +168,10 @@ export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
           distances.set(pair.to, distFrom + pair.weight);
           previous.set(pair.to, pair.from);
           anyRelaxed = true;
+        if (!visitedSet.has(pair.to)) {
+          visitedSet.add(pair.to);
+          visitedOrder.push(pair.to);
+        }
 
           const cumulativeCost = Number((distFrom + pair.weight).toFixed(2));
           relaxedEdges.push({

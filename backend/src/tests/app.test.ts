@@ -149,14 +149,14 @@ describe("backend HTTP API", () => {
       target: 2,
       directed: true, 
       nodes: [
-        { id: 0, name: "A", lat: 0, lng: 0 },
-        { id: 1, name: "B", lat: 0, lng: 0 },
-        { id: 2, name: "C", lat: 0, lng: 0 }
+        { id: 0, name: 'A', lat: 0, lng: 0 },
+        { id: 1, name: 'B', lat: 0, lng: 0 },
+        { id: 2, name: 'C', lat: 0, lng: 0 }
       ],
       edges: [
-        { from: 0, to: 1, weight: 1 },
-        { from: 1, to: 2, weight: -2 },
-        { from: 2, to: 0, weight: -1 } 
+        { id: 'e0-1', from: 0, to: 1, weight: 1 },
+        { id: 'e1-2', from: 1, to: 2, weight: -2 },
+        { id: 'e2-1', from: 2, to: 0, weight: -1 } 
       ]
     };
 
