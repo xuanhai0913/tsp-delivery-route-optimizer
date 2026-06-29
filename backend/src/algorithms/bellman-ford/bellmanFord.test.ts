@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import { bellmanFord, solveBellmanFord, NegativeCycleError } from "./bellmanFord.js";
 
 describe("Bellman-Ford Solver", () => {
