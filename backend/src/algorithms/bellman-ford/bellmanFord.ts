@@ -206,8 +206,6 @@ export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
     // Nếu không có relax nào, có thể dừng sớm (tối ưu)
     if (!anyRelaxed) break;
 
-    // Ghi visitedOrder (mỗi lần lặp là một bước)
-    visitedOrder.push(iteration);
   }
 
   // --- 7c. PHÁT HIỆN CHU TRÌNH ÂM ---
