@@ -18,7 +18,7 @@ type ReportPageProps = {
 
 export function ReportPage({ dataset, source, target, results, onExportJson, onExportPng }: ReportPageProps) {
   const comparisonRows = useMemo(() => buildComparisonRows(results), [results]);
-  const visibleRoutes = { dijkstra: true, aStar: true, floydWarshall: true };
+  const visibleRoutes = { dijkstra: true, aStar: true, floydWarshall: true, bellmanFord: true };
   const sourceNode = dataset.nodes.find((node) => node.id === source);
   const targetNode = dataset.nodes.find((node) => node.id === target);
   const bestCostRow = comparisonRows.find((row) => row.isBestCost);

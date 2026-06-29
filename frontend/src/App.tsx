@@ -39,6 +39,8 @@ function solveWith(algorithm: AlgorithmKey, request: SolveRequest): Promise<Solv
       return solverClient.solveAStar(request);
     case "floydWarshall":
       return solverClient.solveFloydWarshall(request);
+    case "bellmanFord":
+      return solverClient.solveBellmanFord(request);  
     default:
       return solverClient.solveDijkstra(request);
   }
@@ -161,7 +163,7 @@ export default function App() {
     setTarget(nextDataset.defaultTarget);
     setSelectedScenarioKey(defaultRoadScenario.key);
     setResults({});
-    setStatusMessage("Đã áp dụng graph mới. Có thể chạy Dijkstra, A* hoặc Floyd-Warshall.");
+    setStatusMessage("Đã áp dụng graph mới. Có thể chạy Dijkstra, A*, Floyd-Warshall hoặc Bellman-Ford.");
     appendTerminalLog("info", `Dataset selected: ${nextDataset.name}`);
     switchView("dashboard");
   };

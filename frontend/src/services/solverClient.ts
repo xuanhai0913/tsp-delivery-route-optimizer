@@ -15,8 +15,9 @@ import { fetchApiJson, isMockFallbackEnabled } from "./apiConfig";
 const DIJKSTRA_MIN_RUNTIME_MS = 8.4;
 const A_STAR_MIN_RUNTIME_MS = 5.7;
 const FLOYD_WARSHALL_MIN_RUNTIME_MS = 6.9;
+const BELLMAN_FORD_MIN_RUNTIME_MS = 7.0;
 
-type SolveEndpoint = "/api/solve/dijkstra" | "/api/solve/a-star" | "/api/solve/floyd-warshall";
+type SolveEndpoint = "/api/solve/dijkstra" | "/api/solve/a-star" | "/api/solve/floyd-warshall" | "/api/solve/bellman-ford";
 
 type Neighbor = {
   node: number;
@@ -684,6 +685,144 @@ function solveFloydWarshallMock(request: SolveRequest): SolveResult {
   };
 }
 
+function solveBellmanFordMock(request: SolveRequest): SolveResult {
+  const startedAt = performance.now();
+  const directed = request.directed ?? false;
+  const nodeIds = request.nodes.map((n) => n.id);
+  const V = nodeIds.length;
+
+  // Khởi tạo distances và previous
+  const distances = new Map<number, number>();
+  const previous = new Map<number, number>();
+  for (const node of request.nodes) {
+    distances.set(node.id, Number.POSITIVE_INFINITY);
+  }
+  distances.set(request.source, 0);
+
+  const visitedOrder: number[] = [request.source];
+  const visitedSet = new Set<number>([request.source]);
+  const relaxedEdges: SolveResult["relaxedEdges"] = [];
+  const traceSteps: AlgorithmTraceStep[] = [];
+
+  // Hàm push trace step
+  const pushStep = (step: Omit<AlgorithmTraceStep, "stepIndex">) => {
+    traceSteps.push({ ...step, stepIndex: traceSteps.length });
+  };
+
+  // Hàm xây dựng node metrics cho Bellman-Ford
+  const buildNodeMetricsBF = (currentNode?: number, path: number[] = []) => {
+    return buildNodeMetrics({
+      algorithm: "bellmanFord",
+      nodes: request.nodes,
+      currentNode,
+      queue: [], // Bellman-Ford không dùng queue
+      visited: new Set(visitedOrder),
+      previous,
+      distances,
+      path,
+    });
+  };
+
+  // --- Vòng lặp chính: V-1 lần ---
+  for (let iteration = 1; iteration <= V - 1; iteration++) {
+    let anyRelaxed = false;
+
+    // Duyệt tất cả cạnh
+    for (const edge of request.edges) {
+      const pairs: Array<{ from: number; to: number; weight: number }> = [
+        { from: edge.from, to: edge.to, weight: edge.weight },
+      ];
+      if (!directed) {
+        pairs.push({ from: edge.to, to: edge.from, weight: edge.weight });
+      }
+
+      for (const pair of pairs) {
+        const distFrom = distances.get(pair.from) ?? Number.POSITIVE_INFINITY;
+        const distTo = distances.get(pair.to) ?? Number.POSITIVE_INFINITY;
+
+        if (distFrom + pair.weight < distTo) {
+          distances.set(pair.to, distFrom + pair.weight);
+          previous.set(pair.to, pair.from);
+          anyRelaxed = true;
+
+          // Ghi nhận node mới được cập nhật lần đầu
+          if (!visitedSet.has(pair.to)) {
+            visitedSet.add(pair.to);
+            visitedOrder.push(pair.to);
+          }
+
+          const cumulativeCost = Number((distFrom + pair.weight).toFixed(2));
+          relaxedEdges.push({
+            from: pair.from,
+            to: pair.to,
+            cumulativeCost,
+          });
+
+          pushStep({
+            phase: "relax-edge",
+            currentNode: pair.from,
+            relaxedEdge: {
+              id: edge.id,
+              from: pair.from,
+              to: pair.to,
+              weight: pair.weight,
+              cumulativeCost,
+            },
+            queue: [],
+            nodes: buildNodeMetricsBF(pair.from),
+            message: `Bellman-Ford lần ${iteration}: relax cạnh ${pair.from} → ${pair.to}, dist[${pair.to}] = ${cumulativeCost}`,
+          });
+        }
+      }
+    }
+
+    if (!anyRelaxed) break; // Tối ưu: không có thay đổi → dừng sớm
+  }
+
+  // --- Phát hiện chu trình âm ---
+  for (const edge of request.edges) {
+    const pairs: Array<{ from: number; to: number; weight: number }> = [
+      { from: edge.from, to: edge.to, weight: edge.weight },
+    ];
+    if (!directed) {
+      pairs.push({ from: edge.to, to: edge.from, weight: edge.weight });
+    }
+    for (const pair of pairs) {
+      const distFrom = distances.get(pair.from) ?? Number.POSITIVE_INFINITY;
+      const distTo = distances.get(pair.to) ?? Number.POSITIVE_INFINITY;
+      if (distFrom + pair.weight < distTo) {
+        // Phát hiện chu trình âm → ném lỗi (giống backend)
+        throw new Error(`Bellman-Ford detected a negative cycle involving node ${pair.to}.`);
+      }
+    }
+  }
+
+  // --- Dựng đường đi ---
+  const path = reconstructPath(previous, request.source, request.target);
+  const totalCost = calculatePathCost(path, request.edges, directed);
+
+  pushStep({
+    phase: "final-path",
+    currentNode: path.length > 0 ? request.target : undefined,
+    queue: [],
+    nodes: buildNodeMetricsBF(path.length > 0 ? request.target : undefined, path),
+    message: path.length > 0
+      ? `Bellman-Ford tìm được đường đi: ${path.join(" → ")}`
+      : `Không tìm thấy đường đi từ ${request.source} đến ${request.target}`,
+  });
+
+  const elapsed = performance.now() - startedAt;
+  return {
+    path,
+    totalCost,
+    runtimeMs: Number(Math.max(elapsed, BELLMAN_FORD_MIN_RUNTIME_MS).toFixed(2)),
+    resultSource: "mock",
+    visitedOrder,
+    relaxedEdges,
+    traceSteps,
+  };
+}
+
 export const mockSolverClient = {
   async solveDijkstra(request: SolveRequest): Promise<SolveResult> {
     assertValidRequest(request);
@@ -702,6 +841,12 @@ export const mockSolverClient = {
     await delay(470);
     return solveFloydWarshallMock(request);
   },
+
+  async solveBellmanFord(request: SolveRequest): Promise<SolveResult> {
+    assertValidRequest(request);
+    await delay(480); 
+    return solveBellmanFordMock(request);
+  }
 };
 
 async function solveWithFallback(
@@ -733,5 +878,9 @@ export const solverClient = {
 
   solveFloydWarshall(request: SolveRequest): Promise<SolveResult> {
     return solveWithFallback(request, "/api/solve/floyd-warshall", () => mockSolverClient.solveFloydWarshall(request));
+  },
+
+  solveBellmanFord(request: SolveRequest): Promise<SolveResult> {
+    return solveWithFallback(request, "/api/solve/bellman-ford", () => mockSolverClient.solveBellmanFord(request));
   },
 };

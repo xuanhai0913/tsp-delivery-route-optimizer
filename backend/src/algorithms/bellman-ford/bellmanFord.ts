@@ -2,9 +2,7 @@ import { performance } from "node:perf_hooks";
 import type { GraphEdge, PathSolveRequest, PathSolveResult } from "../../types/path.js";
 import { calculatePathCost } from "../../utils/route.js";
 
-// ============================================================
 // 1. Định nghĩa lỗi chu trình âm
-// ============================================================
 export class NegativeCycleError extends Error {
   status = 400;
   constructor(public nodeId: number) {
@@ -13,9 +11,7 @@ export class NegativeCycleError extends Error {
   }
 }
 
-// ============================================================
 // 2. Helper: lấy danh sách cạnh kề (tương tự Dijkstra)
-// ============================================================
 type NeighborEdge = { nodeId: number; weight: number; edge: GraphEdge };
 
 function getNeighborEdges(
@@ -36,9 +32,7 @@ function getNeighborEdges(
     .sort((a, b) => a.weight - b.weight || a.nodeId - b.nodeId);
 }
 
-// ============================================================
 // 3. Hàm dựng lại đường đi (giống Dijkstra)
-// ============================================================
 function reconstructPath(
   previous: Map<number, number>,
   source: number,
@@ -58,9 +52,7 @@ function reconstructPath(
   return path;
 }
 
-// ============================================================
 // 4. Helper xây dựng node metrics cho trace (giống Dijkstra)
-// ============================================================
 type NodeMetric = NonNullable<PathSolveResult["traceSteps"]>[number]["nodes"][number];
 
 function finiteOrUndefined(value: number): number | undefined {
@@ -94,9 +86,7 @@ function buildNodeMetrics({
   });
 }
 
-// ============================================================
 // 5. Hàm push trace step (giống các solver khác)
-// ============================================================
 function pushTraceStep(
   traceSteps: NonNullable<PathSolveResult["traceSteps"]>,
   step: Omit<NonNullable<PathSolveResult["traceSteps"]>[number], "stepIndex">
@@ -104,9 +94,7 @@ function pushTraceStep(
   traceSteps.push({ ...step, stepIndex: traceSteps.length });
 }
 
-// ============================================================
 // 6. Hàm tiện ích: chỉ trả path (cho test nhanh)
-// ============================================================
 export function bellmanFord(
   nodes: PathSolveRequest["nodes"],
   edges: GraphEdge[],
@@ -117,9 +105,7 @@ export function bellmanFord(
   return solveBellmanFord({ source, target, nodes, edges, directed }).path;
 }
 
-// ============================================================
 // 7. HÀM CHÍNH: solveBellmanFord
-// ============================================================
 export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
   const startedAt = performance.now();
 
@@ -168,12 +154,14 @@ export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
           distances.set(pair.to, distFrom + pair.weight);
           previous.set(pair.to, pair.from);
           anyRelaxed = true;
+          
+          // Ghi nhận node được thăm lần đầu
         if (!visitedSet.has(pair.to)) {
           visitedSet.add(pair.to);
           visitedOrder.push(pair.to);
         }
-
           const cumulativeCost = Number((distFrom + pair.weight).toFixed(2));
+          // Lưu trace để hiển thị quá trình relaxation
           relaxedEdges.push({
             from: pair.from,
             to: pair.to,

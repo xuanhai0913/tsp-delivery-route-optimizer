@@ -29,7 +29,7 @@ describe("GraphVisualization", () => {
       <GraphVisualization
         dataset={dataset}
         results={{ dijkstra: { path, totalCost: 7.5, runtimeMs: 8 } }}
-        visibleRoutes={{ dijkstra: true, aStar: true, floydWarshall: true }}
+        visibleRoutes={{ dijkstra: true, aStar: true, floydWarshall: true, bellmanFord: true }}
         playback={snapshot}
       />
     );
@@ -70,7 +70,7 @@ describe("GraphVisualization", () => {
       <GraphVisualization
         dataset={dataset}
         results={{ aStar: { path: [1, 2, 3, 6], totalCost: 7.5, runtimeMs: 5 } }}
-        visibleRoutes={{ dijkstra: true, aStar: true, floydWarshall: true }}
+        visibleRoutes={{ dijkstra: true, aStar: true, floydWarshall: true, bellmanFord: true }}
         playback={snapshot}
       />
     );

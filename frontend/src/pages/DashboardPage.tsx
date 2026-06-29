@@ -118,6 +118,7 @@ export function DashboardPage({
     dijkstra: true,
     aStar: true,
     floydWarshall: true,
+    bellmanFord: true,
   });
 
   const comparisonRows = useMemo(() => buildComparisonRows(results), [results]);

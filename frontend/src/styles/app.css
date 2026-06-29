@@ -3922,4 +3922,46 @@ p {
   .map-legend-overlay {
     display: none;
   }
+
+  /* ── Bellman-Ford route accents ── */
+.route-chip.bellmanFord {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ef4444;
+}
+
+.legend-line.bellmanFord {
+  background: #ef4444;
+}
+
+.graph-edge.bellmanFord {
+  stroke: #ef4444;
+}
+
+.playback-algorithms button.active.bellmanFord {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.algorithm-dot.bellmanFord {
+  background: #ef4444;
+}
+
+.map-route.bellmanFord {
+  stroke: #ef4444;
+}
+
+.map-relaxed-edge.bellmanFord {
+  stroke: rgba(239, 68, 68, 0.4);
+}
+
+.shipper-marker.bellmanFord {
+  background: #ef4444;
+}
+
+.route-toggles button.enabled.bellmanFord {
+  color: #ef4444;
+}
+.route-toggles button.enabled.bellmanFord span {
+  background: #ef4444;
+}
 }
