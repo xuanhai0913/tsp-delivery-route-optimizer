@@ -2317,8 +2317,18 @@ p {
   border-top-color: #2563eb;
 }
 
+.legend-line.aStar,
 .legend-line.astar {
   border-top-color: #7c3aed;
+  border-top-style: dashed;
+}
+
+.legend-line.floydWarshall {
+  border-top-color: #06b6d4;
+}
+
+.legend-line.bellmanFord {
+  border-top-color: #ef4444;
   border-top-style: dashed;
 }
 
@@ -2860,6 +2870,10 @@ p {
   --rl-muted: rgba(230, 237, 243, 0.55);
   --rl-faint: rgba(230, 237, 243, 0.3);
   --rl-accent: #17a34a;
+  --algo-dijkstra: #3b82f6;
+  --algo-astar: #8b5cf6;
+  --algo-floyd: #06b6d4;
+  --algo-bellman: #ef4444;
   min-height: 100vh;
   background: var(--rl-bg);
   color: var(--rl-text);
@@ -3033,7 +3047,7 @@ p {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(230, 237, 243, 0.38);
+  color: rgba(230, 237, 243, 0.62);
 }
 
 .rl-label-row {
@@ -3041,7 +3055,7 @@ p {
   align-items: center;
   gap: 7px;
   margin-bottom: 10px;
-  color: rgba(230, 237, 243, 0.5);
+  color: rgba(230, 237, 243, 0.68);
 }
 
 .rl-label-row h3 {
@@ -3051,7 +3065,7 @@ p {
 .routelab-sidebar .field-label {
   display: block;
   font-size: 12px;
-  color: rgba(230, 237, 243, 0.5);
+  color: rgba(230, 237, 243, 0.68);
   margin: 0 0 5px;
 }
 
@@ -3103,12 +3117,12 @@ p {
   border: 1px solid transparent;
   cursor: pointer;
   font-size: 13px;
-  color: rgba(230, 237, 243, 0.6);
+  color: rgba(230, 237, 243, 0.78);
   transition: background 150ms ease, border-color 150ms ease;
 }
 
 .algo-option:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   border-color: var(--rl-border);
 }
 
@@ -3123,7 +3137,7 @@ p {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.34);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -3142,6 +3156,11 @@ p {
 
 .algo-option.selected .radio-dot {
   border-color: var(--algo-color, var(--rl-accent));
+}
+
+.algo-option.selected {
+  border-color: color-mix(in srgb, var(--algo-color, var(--rl-accent)) 34%, transparent);
+  background: color-mix(in srgb, var(--algo-color, var(--rl-accent)) 12%, transparent);
 }
 
 .algo-option.selected .radio-dot::after {
@@ -3164,14 +3183,15 @@ p {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--algo-color, var(--rl-muted));
-  background: color-mix(in srgb, var(--algo-color, #888) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--algo-color, #888) 28%, transparent);
+  background: color-mix(in srgb, var(--algo-color, #888) 16%, transparent);
 }
 
 .scenario-note {
   margin: 8px 0 0;
   font-size: 11px;
   line-height: 1.45;
-  color: rgba(230, 237, 243, 0.4);
+  color: rgba(230, 237, 243, 0.62);
 }
 
 /* ── Sidebar buttons ── */
@@ -3232,7 +3252,7 @@ p {
   margin: 10px 0 0;
   font-size: 11px;
   line-height: 1.5;
-  color: rgba(230, 237, 243, 0.45);
+  color: rgba(230, 237, 243, 0.62);
 }
 
 /* ── Validation box (dark) ── */
@@ -3341,6 +3361,11 @@ p {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
+  border: 1px solid rgba(230, 237, 243, 0.08);
+  border-radius: 5px;
+  background: rgba(230, 237, 243, 0.035);
+  padding: 6px 7px;
 }
 
 .routelab-sidebar .result-card .result-metrics span {
@@ -3348,13 +3373,13 @@ p {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--rl-faint);
+  color: rgba(230, 237, 243, 0.46);
 }
 
 .routelab-sidebar .result-card .result-metrics strong {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 11px;
-  color: rgba(230, 237, 243, 0.7);
+  color: rgba(230, 237, 243, 0.86);
 }
 
 .routelab-sidebar .result-card .route-section p {
@@ -3598,8 +3623,26 @@ p {
 .map-legend-overlay .legend-line {
   width: 20px;
   height: 3px;
+  border-top: 0;
   border-radius: 2px;
   flex-shrink: 0;
+}
+
+.map-legend-overlay .legend-line.dijkstra {
+  background: var(--algo-dijkstra);
+}
+
+.map-legend-overlay .legend-line.aStar,
+.map-legend-overlay .legend-line.astar {
+  background: var(--algo-astar);
+}
+
+.map-legend-overlay .legend-line.floydWarshall {
+  background: var(--algo-floyd);
+}
+
+.map-legend-overlay .legend-line.bellmanFord {
+  background: var(--algo-bellman);
 }
 
 /* ── Floating results bar ── */
@@ -3672,8 +3715,99 @@ p {
   border: 0;
   border-top: 1px solid var(--rl-border);
   background: var(--rl-surface);
+  color: var(--rl-text);
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.routelab-map-area .playback-kicker,
+.routelab-map-area .playback-details span {
+  color: rgba(230, 237, 243, 0.6);
+}
+
+.routelab-map-area .playback-panel h3 {
+  color: var(--rl-text);
+}
+
+.routelab-map-area .playback-algorithms button,
+.routelab-map-area .speed-control button,
+.routelab-map-area .icon-control,
+.routelab-map-area .play-control {
+  border-color: rgba(230, 237, 243, 0.12);
+  background: rgba(230, 237, 243, 0.07);
+  color: rgba(230, 237, 243, 0.82);
+  box-shadow: none;
+}
+
+.routelab-map-area .playback-algorithms button:hover:not(:disabled),
+.routelab-map-area .speed-control button:hover:not(:disabled),
+.routelab-map-area .icon-control:hover:not(:disabled) {
+  border-color: rgba(230, 237, 243, 0.22);
+  background: rgba(230, 237, 243, 0.11);
+  color: #fff;
+}
+
+.routelab-map-area .play-control {
+  border-color: rgba(23, 163, 74, 0.55);
+  background: var(--rl-accent);
+  color: #fff;
+}
+
+.routelab-map-area .playback-algorithms button.active.dijkstra {
+  border-color: color-mix(in srgb, var(--algo-dijkstra) 58%, transparent);
+  background: rgba(59, 130, 246, 0.16);
+  color: #bfdbfe;
+}
+
+.routelab-map-area .playback-algorithms button.active.aStar {
+  border-color: color-mix(in srgb, var(--algo-astar) 58%, transparent);
+  background: rgba(139, 92, 246, 0.16);
+  color: #ddd6fe;
+}
+
+.routelab-map-area .playback-algorithms button.active.floydWarshall {
+  border-color: color-mix(in srgb, var(--algo-floyd) 58%, transparent);
+  background: rgba(6, 182, 212, 0.16);
+  color: #a5f3fc;
+}
+
+.routelab-map-area .playback-algorithms button.active.bellmanFord {
+  border-color: color-mix(in srgb, var(--algo-bellman) 58%, transparent);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.routelab-map-area .speed-control {
+  border-color: rgba(230, 237, 243, 0.12);
+  background: rgba(8, 11, 17, 0.42);
+}
+
+.routelab-map-area .speed-control svg {
+  color: rgba(230, 237, 243, 0.5);
+}
+
+.routelab-map-area .speed-control button {
+  border: 0;
+  background: transparent;
+}
+
+.routelab-map-area .speed-control button.active {
+  background: rgba(23, 163, 74, 0.2);
+  color: #bbf7d0;
+}
+
+.routelab-map-area .playback-progress {
+  background: rgba(230, 237, 243, 0.12);
+}
+
+.routelab-map-area .playback-details div {
+  border-color: rgba(230, 237, 243, 0.1);
+  background: rgba(230, 237, 243, 0.06);
+  box-shadow: none;
+}
+
+.routelab-map-area .playback-details strong {
+  color: rgba(230, 237, 243, 0.92);
 }
 
 /* ── Terminal (in-flow, dark) ── */
@@ -3732,6 +3866,155 @@ p {
 
 .term-dot.green {
   background: #27c93f;
+}
+
+/* ── Algorithm color accents shared by map/graph/replay ── */
+.route-chip.dijkstra {
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--algo-dijkstra);
+}
+
+.route-chip.aStar {
+  background: rgba(139, 92, 246, 0.16);
+  color: var(--algo-astar);
+}
+
+.route-chip.floydWarshall {
+  background: rgba(6, 182, 212, 0.16);
+  color: var(--algo-floyd);
+}
+
+.route-chip.bellmanFord {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--algo-bellman);
+}
+
+.graph-edge.dijkstra {
+  stroke: var(--algo-dijkstra);
+}
+
+.graph-edge.aStar {
+  stroke: var(--algo-astar);
+}
+
+.graph-edge.floydWarshall {
+  stroke: var(--algo-floyd);
+}
+
+.graph-edge.bellmanFord {
+  stroke: var(--algo-bellman);
+}
+
+.algorithm-dot.dijkstra {
+  background: var(--algo-dijkstra);
+}
+
+.algorithm-dot.aStar {
+  background: var(--algo-astar);
+}
+
+.algorithm-dot.floydWarshall {
+  background: var(--algo-floyd);
+}
+
+.algorithm-dot.bellmanFord {
+  background: var(--algo-bellman);
+}
+
+.map-route.dijkstra {
+  stroke: var(--algo-dijkstra);
+}
+
+.map-route.aStar {
+  stroke: var(--algo-astar);
+}
+
+.map-route.floydWarshall {
+  stroke: var(--algo-floyd);
+}
+
+.map-route.bellmanFord {
+  stroke: var(--algo-bellman);
+}
+
+.map-route.dijkstra.current {
+  filter: drop-shadow(0 0 9px rgba(59, 130, 246, 0.44));
+}
+
+.map-route.aStar.current {
+  filter: drop-shadow(0 0 9px rgba(139, 92, 246, 0.44));
+}
+
+.map-route.floydWarshall.current {
+  filter: drop-shadow(0 0 9px rgba(6, 182, 212, 0.44));
+}
+
+.map-route.bellmanFord.current {
+  filter: drop-shadow(0 0 9px rgba(239, 68, 68, 0.44));
+}
+
+.map-relaxed-edge.dijkstra {
+  stroke: rgba(59, 130, 246, 0.45);
+}
+
+.map-relaxed-edge.aStar {
+  stroke: rgba(139, 92, 246, 0.45);
+}
+
+.map-relaxed-edge.floydWarshall {
+  stroke: rgba(6, 182, 212, 0.45);
+}
+
+.map-relaxed-edge.bellmanFord {
+  stroke: rgba(239, 68, 68, 0.45);
+}
+
+.shipper-marker.dijkstra {
+  background: var(--algo-dijkstra);
+}
+
+.shipper-marker.aStar {
+  background: var(--algo-astar);
+}
+
+.shipper-marker.floydWarshall {
+  background: var(--algo-floyd);
+}
+
+.shipper-marker.bellmanFord {
+  background: var(--algo-bellman);
+}
+
+.routelab-map-area .route-toggles button.enabled.dijkstra {
+  color: #bfdbfe;
+}
+
+.routelab-map-area .route-toggles button.enabled.aStar {
+  color: #ddd6fe;
+}
+
+.routelab-map-area .route-toggles button.enabled.floydWarshall {
+  color: #a5f3fc;
+}
+
+.routelab-map-area .route-toggles button.enabled.bellmanFord {
+  color: #fecaca;
+}
+
+.routelab-map-area .route-toggles button.enabled.dijkstra span {
+  background: var(--algo-dijkstra);
+}
+
+.routelab-map-area .route-toggles button.enabled.aStar span {
+  background: var(--algo-astar);
+}
+
+.routelab-map-area .route-toggles button.enabled.floydWarshall span {
+  background: var(--algo-floyd);
+}
+
+.routelab-map-area .route-toggles button.enabled.bellmanFord span {
+  background: var(--algo-bellman);
 }
 
 /* ── Comparison modal ── */
@@ -3877,29 +4160,6 @@ p {
   }
 }
 
-/* ── Floyd-Warshall route accents on map/graph/chips ── */
-.route-chip.floydWarshall {
-  background: rgba(6, 182, 212, 0.16);
-  color: #06b6d4;
-}
-
-.legend-line.floydWarshall {
-  background: #06b6d4;
-}
-
-.graph-edge.floydWarshall {
-  stroke: #06b6d4;
-}
-
-.playback-algorithms button.active.floydWarshall {
-  border-color: #06b6d4;
-  color: #06b6d4;
-}
-
-.algorithm-dot.floydWarshall {
-  background: #06b6d4;
-}
-
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .routelab-sidebar {
@@ -3922,46 +4182,4 @@ p {
   .map-legend-overlay {
     display: none;
   }
-
-  /* ── Bellman-Ford route accents ── */
-.route-chip.bellmanFord {
-  background: rgba(239, 68, 68, 0.16);
-  color: #ef4444;
-}
-
-.legend-line.bellmanFord {
-  background: #ef4444;
-}
-
-.graph-edge.bellmanFord {
-  stroke: #ef4444;
-}
-
-.playback-algorithms button.active.bellmanFord {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-
-.algorithm-dot.bellmanFord {
-  background: #ef4444;
-}
-
-.map-route.bellmanFord {
-  stroke: #ef4444;
-}
-
-.map-relaxed-edge.bellmanFord {
-  stroke: rgba(239, 68, 68, 0.4);
-}
-
-.shipper-marker.bellmanFord {
-  background: #ef4444;
-}
-
-.route-toggles button.enabled.bellmanFord {
-  color: #ef4444;
-}
-.route-toggles button.enabled.bellmanFord span {
-  background: #ef4444;
-}
 }
