@@ -143,30 +143,34 @@ describe("backend HTTP API", () => {
     expect(response.body.relaxedEdges.length).toBeGreaterThan(0);
   });
 
-  it("detects negative cycle in Bellman-Ford solver", async () => {
-    const negativeCycleRequest = {
-      source: 0,
-      target: 2,
-      directed: true, 
-      nodes: [
-        { id: 0, name: 'A', lat: 0, lng: 0 },
-        { id: 1, name: 'B', lat: 0, lng: 0 },
-        { id: 2, name: 'C', lat: 0, lng: 0 }
-      ],
-      edges: [
-        { id: 'e0-1', from: 0, to: 1, weight: 1 },
-        { id: 'e1-2', from: 1, to: 2, weight: -2 },
-        { id: 'e2-1', from: 2, to: 0, weight: -1 } 
-      ]
-    };
+ it("detects negative cycle in Bellman-Ford solver", async () => {
+  const nodes = [
+    { id: 1, name: "A", lat: 0, lng: 0 },
+    { id: 2, name: "B", lat: 0, lng: 0 },
+    { id: 3, name: "C", lat: 0, lng: 0 }
+  ];
 
-    const response = await request(app)
-      .post("/api/solve/bellman-ford")
-      .send(negativeCycleRequest)
-      .expect(400);
+  const edges = [
+    { id: "e1-2", from: 1, to: 2, weight: 1 },
+    { id: "e2-3", from: 2, to: 3, weight: -2 },
+    { id: "e3-2", from: 3, to: 2, weight: 1 }
+  ];
 
-    expect(response.body.error).toMatch(/negative[- ]?cycle/i);
-  });
+  const response = await request(app)
+    .post("/api/solve/bellman-ford")
+    .send({
+      source: 1,
+      target: 3,
+      nodes,
+      edges,
+      directed: true
+    })
+    .expect(400);
+
+  expect(response.body.error).toBe(
+    "Bellman-Ford detected a negative cycle involving node 3."
+  );
+});
 
   it("rejects invalid shortest-path solve requests", async () => {
     const response = await request(app)

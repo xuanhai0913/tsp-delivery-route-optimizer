@@ -215,7 +215,8 @@ export function solveBellmanFord(request: PathSolveRequest): PathSolveResult {
       const distTo = distances.get(pair.to) ?? Infinity;
 
       if (distFrom + pair.weight < distTo) {
-        // Phát hiện chu trình âm! Ném lỗi với node liên quan
+        console.log(`Bellman-Ford detected a negative cycle involving node ${pair.to}.`  
+        );
         throw new NegativeCycleError(pair.to);
       }
     }
